@@ -1,0 +1,11 @@
+storage:
+  pdf_directory: ./data/pdfs
+  max_file_size_mb: 50
+
+processing:
+  max_concurrent_documents: 10
+  retry_attempts: 3
+
+logging:
+  level: INFO
+  file: ./data/logs/app.log

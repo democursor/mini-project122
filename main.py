@@ -61,6 +61,12 @@ def main():
             
             # Process the document
             print("\n--- Processing Document ---")
+            print("Phase 1: Parsing PDF...")
+            print("Phase 2: Chunking and extracting concepts...")
+            print("Phase 3: Building knowledge graph...")
+            print("Phase 4: Generating embeddings and indexing...")
+            print("\n(This may take 30-60 seconds for model loading on first run)")
+            
             result = processor.process_document(document_id)
             
             if result['status'] == 'complete':
@@ -95,6 +101,17 @@ def main():
                         for kp in result['concepts'][0]['keyphrases'][:3]:
                             print(f"    - {kp['phrase']} (score: {kp['score']:.2f})")
                 
+                # Phase 3 results
+                if result.get('graph_built'):
+                    print(f"\nKnowledge Graph:")
+                    print(f"  Graph built: {result['graph_built']}")
+                
+                # Phase 4 results
+                if result.get('embeddings_stored'):
+                    print(f"\nVector Storage:")
+                    print(f"  Embeddings stored: {result['embeddings_stored']}")
+                    print(f"  Chunks indexed for semantic search")
+                
                 # Save parsed output
                 output_dir = Path('./data/parsed')
                 output_dir.mkdir(parents=True, exist_ok=True)
@@ -114,16 +131,19 @@ def main():
     else:
         print("No file selected or file not found.")
     
-    print("\n=== Phase 1 & 2 Complete ===")
+    print("\n=== Phase 1, 2, 3 & 4 Complete ===")
     print("\nComponents implemented:")
     print("  ✓ PDF validation (format, size, integrity)")
     print("  ✓ PDF storage (organized by year/month)")
     print("  ✓ PDF parsing (text, metadata, sections)")
     print("  ✓ Semantic chunking (boundary detection)")
     print("  ✓ Concept extraction (NER + keyphrases)")
+    print("  ✓ Knowledge graph (Neo4j)")
+    print("  ✓ Vector storage (ChromaDB)")
+    print("  ✓ Semantic search ready")
     print("  ✓ LangGraph orchestration")
     print("  ✓ File browser for easy PDF selection")
-    print("\nNext: Proceed to Phase 3?")
+    print("\nNext: Use 'python search_papers.py' to search documents")
 
 
 if __name__ == "__main__":

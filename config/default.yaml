@@ -9,3 +9,14 @@ processing:
 logging:
   level: INFO
   file: ./data/logs/app.log
+
+neo4j:
+  uri: neo4j://127.0.0.1:7687
+  user: neo4j
+  password: Yadav2480@
+  database: miniproject
+
+vector:
+  persist_directory: ./data/chroma
+  embedding_model: all-MiniLM-L6-v2
+  batch_size: 32

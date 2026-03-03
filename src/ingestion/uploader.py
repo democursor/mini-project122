@@ -1,4 +1,4 @@
-﻿import uuid
+import uuid
 import logging
 import tempfile
 from pathlib import Path

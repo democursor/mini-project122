@@ -1,107 +1,112 @@
-# Autonomous Research Literature Intelligence & Discovery Platform
+# Research Literature Processing Platform
 
-## 🎯 Project Vision
+An AI-powered platform for processing research papers with automated PDF ingestion, semantic chunking, and intelligent concept extraction.
 
-An industry-grade AI system that transforms how researchers interact with academic literature. This platform combines deep learning, natural language processing, knowledge graphs, and generative AI to automate the extraction, organization, and semantic understanding of research papers.
+## Features
 
-Think of it as your **intelligent research assistant** that not only organizes your papers but understands their content, discovers hidden connections, and helps you synthesize insights across your entire research collection.
+### PDF Ingestion & Parsing
+- PDF validation (format, size, integrity)
+- Organized storage by year/month
+- Metadata extraction (title, authors, abstract)
+- Text parsing using PyMuPDF
 
----
+### Semantic Analysis
+- Semantic chunking with sentence-transformers
+- Named entity recognition using SpaCy
+- Keyphrase extraction with KeyBERT
+- Concept mapping to document chunks
 
-## 🔥 The Problem We're Solving
+## Technology Stack
 
-### The Research Overload Challenge
+- **Python 3.12**
+- **LangGraph** - Workflow orchestration
+- **PyMuPDF** - PDF parsing
+- **SpaCy** - Named entity recognition
+- **KeyBERT** - Keyphrase extraction
+- **sentence-transformers** - Semantic embeddings
+- **NLTK** - Natural language processing
 
-Imagine you're researching "transformer architectures in computer vision." You have 50 papers downloaded, but:
+## Installation
 
-- **Discovery Problem**: You don't know which papers are most relevant to your specific question
-- **Memory Problem**: You can't remember which paper discussed a specific technique
-- **Search Problem**: You want papers combining transformers with object detection, but keyword search fails
-- **Connection Problem**: You need to understand how different papers relate to each other
-- **Synthesis Problem**: You want to identify research gaps and emerging trends
-
-### Current Manual Approach
-
-Researchers spend **countless hours**:
-- Manually reading papers one by one
-- Tracking citations in spreadsheets
-- Searching with limited keyword matching
-- Missing relevant papers due to terminology differences
-- Struggling to see the big picture across multiple papers
-
-### Our Solution
-
-This platform **automates** these tasks using:
-- **Semantic understanding** instead of keyword matching
-- **Knowledge graphs** to reveal connections between papers
-- **AI-powered insights** to synthesize information across documents
-- **Intelligent organization** that learns from your research collection
-
----
-
-## 💡 Why This Project Matters
-
-### For Academia
-
-- **Accelerates literature reviews** from weeks to hours
-- **Identifies research gaps** by analyzing concept coverage
-- **Surfaces hidden connections** between seemingly unrelated papers
-- **Tracks research evolution** over time
-- **Enables systematic reviews** with comprehensive coverage
-
-### For Industry
-
-- **Keeps R&D teams current** with latest research
-- **Supports patent analysis** and prior art searches
-- **Facilitates technology transfer** from research to products
-- **Enables competitive intelligence** in fast-moving fields
-- **Reduces time-to-insight** for technical decisions
-
-### For Your Career
-
-This project demonstrates **production-grade AI engineering skills** that companies value:
-
-✅ **End-to-end ML system design** (not just model training)  
-✅ **Multi-component architecture** (orchestration, databases, APIs)  
-✅ **Deep learning application** (NLP, embeddings, transformers)  
-✅ **Production thinking** (error handling, scalability, monitoring)  
-✅ **Technology trade-offs** (can justify every choice)
-
-**Target Roles**: ML Engineer, Applied AI Engineer, Research Engineer, AI Product Engineer
-
----
-
-## 🏗️ High-Level System Overview
-
-### The Processing Pipeline
-
-```
-📄 PDF Upload → 📖 Parse & Extract → ✂️ Semantic Chunking → 
-🧠 Concept Extraction → 🕸️ Knowledge Graph → 🔢 Vector Embeddings → 
-🔍 Semantic Search → 💬 AI Assistant
+1. Clone the repository:
+```bash
+git clone https://github.com/democursor/mini-project122.git
+cd mini-project122
 ```
 
-### Core Capabilities
+2. Create virtual environment:
+```bash
+python -m venv vnv
+vnv\Scripts\activate  # Windows
+source vnv/bin/activate  # Linux/Mac
+```
 
-1. **PDF Ingestion**: Upload research papers from your local machine
-2. **Intelligent Parsing**: Extract text, metadata, and document structure
-3. **Semantic Chunking**: Segment documents based on meaning, not arbitrary character counts
-4. **Concept Extraction**: Identify key concepts, methods, entities using deep learning
-5. **Knowledge Graph**: Build a graph of papers, concepts, and their relationships
-6. **Vector Search**: Find papers by semantic similarity, not just keywords
-7. **AI Assistant**: Ask questions and get answers grounded in your research collection
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-### Technology Stack at a Glance
+4. Download required models:
+```bash
+python -m spacy download en_core_web_sm
+```
 
-- **Language**: Python 3.10+
-- **Deep Learning**: PyTorch, Hugging Face Transformers, Sentence-BERT
-- **NLP**: SpaCy (scientific NER), KeyBERT (keyphrase extraction)
-- **Orchestration**: LangGraph (workflow management)
-- **Knowledge Graph**: Neo4j (graph database)
-- **Vector Store**: ChromaDB (semantic search)
-- **GenAI**: OpenAI API or local LLM (Ollama)
-- **Persistence**: SQLite + file storage
+## Usage
 
+Run the main program:
+```bash
+python main.py
+```
+
+The program will:
+1. Open a file browser to select a PDF
+2. Validate and store the PDF
+3. Parse the document content
+4. Create semantic chunks
+5. Extract entities and keyphrases
+6. Save results to `data/parsed/`
+
+## Project Structure
+
+```
+mini-project/
+├── src/
+│   ├── ingestion/       # PDF upload and validation
+│   ├── parsing/         # PDF text extraction
+│   ├── chunking/        # Semantic chunking
+│   ├── extraction/      # Concept extraction
+│   ├── orchestration/   # LangGraph workflow
+│   └── utils/           # Configuration and logging
+├── config/              # Configuration files
+├── data/                # Storage for PDFs and results
+├── main.py              # Main entry point
+├── requirements.txt     # Python dependencies
+└── README.md
+```
+
+## Testing
+
+Run tests:
+```bash
+python test_phase1.py
+python test_phase2.py
+```
+
+## Output Format
+
+Results are saved as JSON files in `data/parsed/` with:
+- Document metadata (title, authors, pages)
+- Semantic chunks with token counts
+- Extracted entities with labels
+- Keyphrases with relevance scores
+
+## Configuration
+
+Edit `config/default.yaml` to customize:
+- Storage paths
+- Validation rules
+- Chunking parameters
+- Model settings
 ---
 
 ## 🎬 Real-World Use Cases

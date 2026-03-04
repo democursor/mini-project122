@@ -24,7 +24,7 @@ vector:
 rag:
   llm_provider: google  # openai, google, or ollama
   llm_model: gemini-2.5-flash  # Auto-detected: gemini-2.5-flash, gemini-2.5-pro, gemini-2.0-flash
-  max_context_tokens: 3000
-  max_response_tokens: 1000
-  temperature: 0.3
-  top_k_retrieval: 5
+  max_context_tokens: 4000
+  max_response_tokens: 1500
+  temperature: 0.4
+  top_k_retrieval: 10

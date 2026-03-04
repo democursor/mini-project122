@@ -29,10 +29,11 @@ class RAGRetriever:
         Retrieve relevant context for RAG generation.
         
         Strategy:
-        1. Perform semantic search
-        2. Select diverse, high-quality chunks
-        3. Ensure context fits within token limits
-        4. Format for LLM consumption
+        1. Expand query with related terms
+        2. Perform semantic search with expanded query
+        3. Select diverse, high-quality chunks
+        4. Ensure context fits within token limits
+        5. Format for LLM consumption
         
         Args:
             query: User query
@@ -45,8 +46,12 @@ class RAGRetriever:
         logger.info(f"Retrieving context for query: {query[:100]}...")
         
         try:
+            # Expand query for better semantic matching
+            expanded_query = self._expand_query(query)
+            logger.debug(f"Expanded query: {expanded_query[:200]}...")
+            
             # Retrieve more candidates for diversity
-            candidates = self.search_engine.search(query, top_k * 2)
+            candidates = self.search_engine.search(expanded_query, top_k * 3)
             logger.debug(f"Retrieved {len(candidates)} candidate chunks")
             
             # Select diverse, high-quality chunks
@@ -74,6 +79,40 @@ class RAGRetriever:
         except Exception as e:
             logger.error(f"Error retrieving context: {e}", exc_info=True)
             raise
+    
+    def _expand_query(self, query: str) -> str:
+        """
+        Expand query with related terms for better semantic matching.
+        
+        Args:
+            query: Original query
+            
+        Returns:
+            Expanded query string
+        """
+        # Add context words to help semantic search
+        # This helps find related content even if exact terms don't match
+        query_lower = query.lower()
+        
+        # Common expansions for research queries
+        expansions = []
+        
+        # Add the original query
+        expansions.append(query)
+        
+        # Add related research terms
+        if any(word in query_lower for word in ['what is', 'define', 'explain']):
+            expansions.append(f"definition concept explanation {query}")
+        
+        if any(word in query_lower for word in ['impact', 'effect', 'influence']):
+            expansions.append(f"effects consequences results {query}")
+        
+        if any(word in query_lower for word in ['method', 'approach', 'technique']):
+            expansions.append(f"methodology approach technique {query}")
+        
+        # Join expansions
+        expanded = " ".join(expansions)
+        return expanded
     
     def _select_diverse_chunks(self, candidates: List[Dict], top_k: int) -> List[Dict]:
         """

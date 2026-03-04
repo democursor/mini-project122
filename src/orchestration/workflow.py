@@ -38,7 +38,8 @@ class DocumentProcessor:
         
         # Initialize graph builder if Neo4j config exists
         self.graph_builder = None
-        if config.get('neo4j'):
+        neo4j_uri = config.get('neo4j.uri')
+        if neo4j_uri:
             try:
                 self.graph_builder = KnowledgeGraphBuilder(
                     uri=config.get('neo4j.uri', 'bolt://localhost:7687'),

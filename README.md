@@ -1,446 +1,335 @@
-# Research Literature Processing Platform
+# Research Literature Platform
 
-An AI-powered platform for processing research papers with automated PDF ingestion, semantic chunking, and intelligent concept extraction.
+An AI-powered platform for processing, analyzing, and querying research papers with intelligent document understanding, knowledge graph construction, and conversational AI assistance.
 
-## Features
+## 🌟 Features
 
-### PDF Ingestion & Parsing
-- PDF validation (format, size, integrity)
-- Organized storage by year/month
-- Metadata extraction (title, authors, abstract)
-- Text parsing using PyMuPDF
+### Core Capabilities
+- **PDF Processing**: Automated ingestion, validation, and text extraction
+- **Semantic Analysis**: Intelligent chunking and concept extraction using NLP
+- **Knowledge Graph**: Neo4j-powered relationship mapping between papers and concepts
+- **Vector Search**: ChromaDB-based semantic search across document chunks
+- **AI Assistant**: RAG-powered conversational interface with citation support
+- **Modern UI**: React-based frontend with real-time chat and visualization
 
-### Semantic Analysis
-- Semantic chunking with sentence-transformers
-- Named entity recognition using SpaCy
-- Keyphrase extraction with KeyBERT
-- Concept mapping to document chunks
+### Key Highlights
+- Upload and process research papers automatically
+- Ask questions and get AI-generated answers with citations
+- Explore knowledge graphs to discover concept relationships
+- Semantic search to find relevant papers by meaning, not just keywords
+- Chat history persistence for continuous research sessions
 
-## Technology Stack
+## 🏗️ Architecture
 
-- **Python 3.12**
-- **LangGraph** - Workflow orchestration
-- **PyMuPDF** - PDF parsing
-- **SpaCy** - Named entity recognition
-- **KeyBERT** - Keyphrase extraction
-- **sentence-transformers** - Semantic embeddings
-- **NLTK** - Natural language processing
+### Backend Stack
+- **FastAPI**: REST API server (Python 3.12)
+- **Neo4j**: Knowledge graph database
+- **ChromaDB**: Vector database for embeddings
+- **Google Gemini**: LLM for AI assistance
+- **SpaCy**: Named entity recognition
+- **KeyBERT**: Keyphrase extraction
+- **sentence-transformers**: Semantic embeddings
 
-## Installation
+### Frontend Stack
+- **React 18**: Modern UI framework
+- **Vite**: Fast build tool
+- **TailwindCSS**: Utility-first styling
+- **Recharts**: Data visualization
 
-1. Clone the repository:
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.12+
+- Node.js 18+
+- Neo4j Database
+- Google Gemini API Key
+
+### Installation
+
+1. **Clone the repository**
 ```bash
 git clone https://github.com/democursor/mini-project122.git
 cd mini-project122
 ```
 
-2. Create virtual environment:
+2. **Setup Python environment**
 ```bash
 python -m venv vnv
 vnv\Scripts\activate  # Windows
-source vnv/bin/activate  # Linux/Mac
-```
-
-3. Install dependencies:
-```bash
 pip install -r requirements.txt
-```
-
-4. Download required models:
-```bash
 python -m spacy download en_core_web_sm
 ```
 
-## Usage
+3. **Configure environment**
+Create `.env` file:
+```env
+GOOGLE_API_KEY=your_gemini_api_key
+NEO4J_URI=neo4j://127.0.0.1:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+NEO4J_DATABASE=miniproject
+```
 
-Run the main program:
+4. **Setup Neo4j**
+- Install Neo4j Desktop
+- Create database named "miniproject"
+- Start the database
+
+5. **Install frontend dependencies**
 ```bash
-python main.py
+cd frontend
+npm install
 ```
 
-The program will:
-1. Open a file browser to select a PDF
-2. Validate and store the PDF
-3. Parse the document content
-4. Create semantic chunks
-5. Extract entities and keyphrases
-6. Save results to `data/parsed/`
+### Running the Application
 
-## Project Structure
+1. **Start the backend server**
+```bash
+python run_api.py
+```
+Backend runs on `http://localhost:8000`
+
+2. **Start the frontend** (in a new terminal)
+```bash
+cd frontend
+npm run dev
+```
+Frontend runs on `http://localhost:3000`
+
+3. **Access the application**
+Open your browser to `http://localhost:3000`
+
+## 📖 Usage
+
+### Upload Documents
+1. Navigate to the Upload page
+2. Select a PDF research paper
+3. System automatically processes and extracts information
+
+### Search Papers
+1. Go to Search page
+2. Enter your query
+3. Get semantically relevant results with similarity scores
+
+### Chat with AI
+1. Open Chat page
+2. Ask questions about your uploaded papers
+3. Receive AI-generated answers with citations
+4. Chat history is automatically saved
+
+### Explore Knowledge Graph
+1. Visit Knowledge Graph page
+2. View statistics on papers, concepts, and relationships
+3. Explore connections between research concepts
+
+## 🎯 System Components
+
+### Document Processing Pipeline
+```
+PDF Upload → Validation → Parsing → Chunking → NLP Extraction → Storage
+```
+
+1. **Ingestion**: Validates and stores PDFs with metadata
+2. **Parsing**: Extracts text, title, authors, and abstract
+3. **Chunking**: Creates semantic chunks using sentence transformers
+4. **Extraction**: Identifies entities (NER) and keyphrases (KeyBERT)
+5. **Graph Building**: Constructs knowledge graph in Neo4j
+6. **Vector Storage**: Stores embeddings in ChromaDB
+
+### AI Assistant (RAG)
+```
+User Query → Query Expansion → Vector Search → Context Retrieval → LLM Generation → Response with Citations
+```
+
+- Expands queries with related terms for better retrieval
+- Retrieves top-10 relevant chunks from vector database
+- Uses Google Gemini for intelligent answer generation
+- Extracts and displays citations from source documents
+
+## 📁 Project Structure
 
 ```
-mini-project/
+mini-project122/
 ├── src/
-│   ├── ingestion/       # PDF upload and validation
-│   ├── parsing/         # PDF text extraction
-│   ├── chunking/        # Semantic chunking
-│   ├── extraction/      # Concept extraction
-│   ├── orchestration/   # LangGraph workflow
-│   └── utils/           # Configuration and logging
-├── config/              # Configuration files
-├── data/                # Storage for PDFs and results
-├── main.py              # Main entry point
-├── requirements.txt     # Python dependencies
+│   ├── api/              # FastAPI routes and models
+│   ├── ingestion/        # PDF upload and validation
+│   ├── parsing/          # Text extraction
+│   ├── chunking/         # Semantic chunking
+│   ├── extraction/       # NER and keyphrase extraction
+│   ├── graph/            # Neo4j knowledge graph
+│   ├── vector/           # ChromaDB vector storage
+│   ├── rag/              # RAG and AI assistant
+│   ├── services/         # Business logic layer
+│   ├── orchestration/    # Workflow management
+│   └── utils/            # Configuration and logging
+├── frontend/
+│   ├── src/
+│   │   ├── pages/        # React pages
+│   │   ├── components/   # Reusable components
+│   │   └── api/          # API client
+│   └── package.json
+├── config/               # Configuration files
+├── data/                 # Storage (PDFs, parsed data)
+├── requirements.txt      # Python dependencies
 └── README.md
 ```
 
-## Testing
+## 🔧 API Endpoints
 
-Run tests:
+### Documents
+- `POST /api/documents/upload` - Upload and process PDF
+- `GET /api/documents` - List all documents
+- `GET /api/documents/{doc_id}` - Get document details
+
+### Search
+- `POST /api/search` - Semantic search across documents
+
+### Chat
+- `POST /api/chat` - Ask questions and get AI responses
+
+### Knowledge Graph
+- `GET /api/graph/stats` - Get graph statistics
+- `GET /api/graph/concepts` - List all concepts
+- `GET /api/graph/papers/{paper_id}/concepts` - Get paper concepts
+
+## 🎨 Features in Detail
+
+### Intelligent Query Expansion
+The system automatically expands your queries with related terms:
+- "COVID-19" → includes "pandemic", "coronavirus", "SARS-CoV-2"
+- "machine learning" → includes "ML", "artificial intelligence", "deep learning"
+
+### Citation Extraction
+AI responses include citations with:
+- Document title
+- Relevant excerpt
+- Page numbers (when available)
+
+### Knowledge Graph Visualization
+- View total papers and concepts
+- Explore relationships between concepts
+- Discover research connections
+
+### Chat History Persistence
+- Conversations saved in browser localStorage
+- Resume research sessions anytime
+- Clear history option available
+
+## 🧪 Testing
+
+Run backend tests:
 ```bash
-python test_phase1.py
-python test_phase2.py
+python test_phase1.py  # PDF ingestion
+python test_phase2.py  # Chunking and extraction
+python test_phase3.py  # Knowledge graph
+python test_phase4.py  # Vector search
+python test_phase5.py  # RAG assistant
+python test_phase6.py  # Full integration
 ```
 
-## Output Format
+Test API endpoints:
+```bash
+python test_api.py
+```
 
-Results are saved as JSON files in `data/parsed/` with:
-- Document metadata (title, authors, pages)
-- Semantic chunks with token counts
-- Extracted entities with labels
-- Keyphrases with relevance scores
-
-## Configuration
+## 🛠️ Configuration
 
 Edit `config/default.yaml` to customize:
-- Storage paths
-- Validation rules
-- Chunking parameters
-- Model settings
----
 
-## 🎬 Real-World Use Cases
+```yaml
+storage:
+  pdf_dir: "data/pdfs"
+  parsed_dir: "data/parsed"
 
-### Use Case 1: Literature Review for Thesis
+validation:
+  max_size_mb: 50
+  allowed_formats: [".pdf"]
 
-**Scenario**: PhD student researching "attention mechanisms in computer vision"
+chunking:
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  max_chunk_size: 512
 
-**Workflow**:
-1. Upload 100 papers on transformers, attention, and vision
-2. Ask: "What are the main approaches to applying attention in vision?"
-3. System retrieves relevant chunks, synthesizes answer with citations
-4. Explore knowledge graph to find related concepts
-5. Identify papers that combine attention with object detection
-6. Generate summary of research landscape
-
-**Value**: Reduces literature review from 3 weeks to 3 days
-
-### Use Case 2: Staying Current with Research
-
-**Scenario**: ML engineer at a company building vision models
-
-**Workflow**:
-1. Upload new papers from arXiv weekly
-2. Search: "papers similar to ViT (Vision Transformer)"
-3. System finds semantically similar papers, even with different terminology
-4. Ask: "What improvements have been made to ViT since 2021?"
-5. Get synthesized answer with specific papers and techniques
-
-**Value**: Stay current without reading every paper manually
-
-### Use Case 3: Finding Research Gaps
-
-**Scenario**: Researcher planning next project
-
-**Workflow**:
-1. Upload papers in a specific domain (e.g., "few-shot learning")
-2. Explore knowledge graph to see concept coverage
-3. Identify under-explored combinations (e.g., "few-shot + graph neural networks")
-4. Ask: "What hasn't been tried yet in few-shot learning?"
-5. System identifies gaps based on concept co-occurrence
-
-**Value**: Discover novel research directions systematically
-
-### Use Case 4: Understanding a New Field
-
-**Scenario**: Engineer transitioning to a new domain
-
-**Workflow**:
-1. Upload foundational papers in the new field
-2. Ask: "What are the key concepts I need to understand?"
-3. System extracts and ranks important concepts
-4. Ask follow-up questions about specific concepts
-5. Explore knowledge graph to understand relationships
-
-**Value**: Accelerate learning curve in unfamiliar domains
-
----
-
-## 📊 System Architecture (Simplified)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      User Interface                         │
-│                 (Upload, Search, Chat)                      │
-└────────────────────────┬────────────────────────────────────┘
-                         │
-┌────────────────────────┴────────────────────────────────────┐
-│                 LangGraph Orchestrator                      │
-│           (Workflow Management & Error Handling)            │
-└─┬──────┬──────┬──────┬──────┬──────┬──────────────────────┘
-  │      │      │      │      │      │
-  ▼      ▼      ▼      ▼      ▼      ▼
-┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐
-│PDF │ │Parse│ │Chunk│ │NLP │ │Graph│ │Vector│
-│    │ │     │ │     │ │    │ │     │ │Store │
-└────┘ └────┘ └────┘ └────┘ └────┘ └────┘
-  │      │      │      │      │      │
-  └──────┴──────┴──────┴──────┴──────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────────┐
-│                      Data Layer                             │
-│  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐                  │
-│  │Files │  │SQLite│  │Neo4j │  │Chroma│                  │
-│  └──────┘  └──────┘  └──────┘  └──────┘                  │
-└─────────────────────────────────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Semantic Search + AI Assistant                 │
-│                  (RAG with LLM)                             │
-└─────────────────────────────────────────────────────────────┘
+rag:
+  model: "gemini-1.5-flash"
+  temperature: 0.4
+  max_tokens: 4000
+  top_k: 10
 ```
 
-### Key Design Principles
+## 🚨 Troubleshooting
 
-1. **Modularity**: Each component has a single responsibility
-2. **Separation of Concerns**: Processing logic separate from storage
-3. **Extensibility**: Easy to swap components (e.g., different embedding models)
-4. **Resilience**: Graceful error handling and retry logic
-5. **Scalability**: Designed to grow from local to production
+### Neo4j Connection Issues
+- Verify Neo4j is running
+- Check credentials in `.env`
+- Ensure database "miniproject" exists
 
----
+### Frontend Not Loading
+- Check if backend is running on port 8000
+- Verify CORS settings in FastAPI
+- Clear browser cache
 
-## 🎓 What You'll Learn
+### PDF Upload Fails
+- Check file size (max 50MB)
+- Ensure PDF is not corrupted
+- Verify storage directory permissions
 
-### Technical Skills
+## 🔐 Security Notes
 
-- **System Design**: Architecting multi-component AI systems
-- **Deep Learning**: Applying pre-trained models (embeddings, NER, LLMs)
-- **NLP**: Text processing, semantic similarity, entity extraction
-- **Knowledge Graphs**: Graph databases, relationship queries, Cypher
-- **Vector Search**: Embeddings, approximate nearest neighbors, HNSW
-- **Orchestration**: Workflow management, state machines, error recovery
-- **RAG**: Retrieval-Augmented Generation for grounded AI responses
-- **Production Engineering**: Error handling, logging, monitoring, scalability
+- Never commit `.env` file to version control
+- Keep API keys secure
+- Use environment variables for sensitive data
+- Neo4j credentials should be strong passwords
 
-### Conceptual Understanding
+## 📊 Performance
 
-- **Why semantic search beats keyword search**
-- **How embeddings capture meaning in numbers**
-- **When to use graphs vs relational databases**
-- **How RAG prevents LLM hallucinations**
-- **Trade-offs between different technologies**
-- **How to design for scale from day one**
+- Processes typical research paper (20 pages) in ~30 seconds
+- Semantic search returns results in <1 second
+- AI responses generated in 2-5 seconds
+- Supports concurrent document processing
 
-### Career Preparation
+## 🌐 Deployment
 
-- **Portfolio project** that demonstrates end-to-end thinking
-- **Interview talking points** about architecture and trade-offs
-- **Production mindset** beyond just training models
-- **Technology evaluation** skills for choosing the right tools
+For production deployment:
+1. Use production-grade WSGI server (Gunicorn/Uvicorn)
+2. Setup reverse proxy (Nginx)
+3. Use managed Neo4j instance
+4. Configure proper CORS policies
+5. Enable HTTPS
+6. Setup monitoring and logging
 
----
+## 🎓 Learning Outcomes
 
-## 📈 Career & Interview Value
+This project demonstrates:
+- **Full-stack AI application development**
+- **RAG (Retrieval-Augmented Generation) implementation**
+- **Knowledge graph construction and querying**
+- **Vector database integration**
+- **Modern React frontend development**
+- **RESTful API design**
+- **NLP pipeline orchestration**
+- **Production-ready error handling**
 
-### Why Companies Care About This Project
+## 🤝 Contributing
 
-1. **Demonstrates End-to-End Thinking**: You can design complete systems, not just train models
-2. **Shows Production Skills**: Error handling, scalability, monitoring matter in real products
-3. **Proves Multi-Technology Competence**: You can integrate NLP, graphs, vectors, and GenAI
-4. **Exhibits Problem-Solving**: You understand trade-offs and can justify decisions
-5. **Solves Real Problems**: Knowledge management is a billion-dollar industry
+This is an educational project. Feel free to fork and experiment!
 
-### Relevant Job Roles
+## 📝 License
 
-| Role | Why This Project Fits |
-|------|----------------------|
-| **ML Engineer** | End-to-end ML pipeline design and deployment |
-| **Applied AI Engineer** | Practical application of NLP and deep learning |
-| **Research Engineer** | Understanding of research workflows and knowledge management |
-| **AI Product Engineer** | Building complete AI-powered products |
-| **Data Scientist** | Advanced NLP, semantic analysis, and information retrieval |
-
-### Interview Evaluation Points
-
-Interviewers will assess:
-
-✅ **System Design**: Can you architect complex AI systems?  
-✅ **ML Engineering**: Do you understand embeddings, vector search, semantic similarity?  
-✅ **Production Thinking**: Have you considered error handling, scalability, monitoring?  
-✅ **Domain Knowledge**: Do you understand NLP, knowledge graphs, information retrieval?  
-✅ **Trade-offs**: Can you justify technology choices and discuss alternatives?  
-✅ **Communication**: Can you explain complex concepts clearly?
-
-### Sample Interview Questions You Can Answer
-
-- "Design a semantic search system for research papers"
-- "How would you scale this to millions of documents?"
-- "What are the trade-offs between different embedding models?"
-- "How does RAG prevent hallucinations in LLMs?"
-- "Why use a graph database instead of SQL?"
-- "How would you handle failures in a multi-step pipeline?"
-
----
-
-## 📚 Documentation Structure
-
-This project includes comprehensive documentation for learning and interview preparation:
-
-- **README.md** (this file): Project overview and motivation
-- **REQUIREMENTS.md**: Detailed functional and non-functional requirements
-- **DESIGN.md**: Complete system design with architecture and component details
-- **TECHSTACK.md**: Technology choices with trade-offs and alternatives
-- **ARCHITECTURE.md**: System components, interactions, and design patterns
-- **WORKFLOW.md**: End-to-end data flow and execution lifecycle
-- **PHASES.md**: Phase-by-phase implementation guide
-- **TASKS.md**: Detailed task breakdown for implementation
-- **INTERVIEW_GUIDE.md**: Interview preparation and talking points
-- **LEARNING_OUTCOMES.md**: Skills and concepts learned
-- **EXTENSIONS.md**: Future enhancements and scaling strategies
-
----
-
-## 🚀 Project Phases
-
-### Phase 0: Foundation & Setup
-- Environment setup
-- Documentation structure
-- Technology evaluation
-
-### Phase 1: PDF Ingestion & Parsing
-- File upload and validation
-- Text extraction
-- Metadata extraction
-
-### Phase 2: Semantic Chunking & Concept Extraction
-- Intelligent document segmentation
-- NER and keyphrase extraction
-- Concept normalization
-
-### Phase 3: Knowledge Graph Construction
-- Graph schema design
-- Node and relationship creation
-- Query optimization
-
-### Phase 4: Vector Storage & Semantic Search
-- Embedding generation
-- Vector indexing
-- Similarity search
-
-### Phase 5: RAG & AI Assistant
-- Retrieval integration
-- LLM integration
-- Prompt engineering
-
-### Phase 6: Orchestration & Error Handling
-- LangGraph workflow
-- State management
-- Retry logic
-
-### Phase 7: Data Persistence & Testing
-- Database schema
-- Property-based testing
-- Integration testing
-
-### Phase 8: Scaling & Production
-- Performance optimization
-- Monitoring
-- Deployment strategies
-
----
-
-## 🎯 Success Criteria
-
-This project is successful if you can:
-
-1. **Explain every component** and why it's needed
-2. **Justify every technology choice** with trade-offs
-3. **Discuss scaling strategies** from local to production
-4. **Handle interview questions** about system design and ML engineering
-5. **Demonstrate understanding** of NLP, graphs, vectors, and GenAI
-6. **Show production thinking** beyond just model training
-
----
-
-## 🤝 Who This Project Is For
-
-### Perfect For:
-
-- **AIML students** (beginner to intermediate) wanting deep conceptual understanding
-- **Aspiring ML engineers** building a portfolio project
-- **Career switchers** preparing for AI/ML roles
-- **Researchers** wanting to understand production AI systems
-- **Engineers** learning system design for AI products
-
-### Prerequisites:
-
-- Basic Python programming
-- Understanding of machine learning concepts
-- Familiarity with deep learning (helpful but not required)
-- Curiosity and willingness to learn
-
----
-
-## 📖 How to Use This Project
-
-### For Learning:
-
-1. Read through documentation in order (README → REQUIREMENTS → DESIGN → TECHSTACK)
-2. Understand the "why" behind each decision
-3. Explore alternatives and trade-offs
-4. Ask yourself: "How would I explain this in an interview?"
-
-### For Interviews:
-
-1. Review INTERVIEW_GUIDE.md for talking points
-2. Practice explaining architecture and trade-offs
-3. Prepare to discuss scaling strategies
-4. Be ready to answer "why not X instead of Y?"
-
-### For Implementation (Future):
-
-1. Follow PHASES.md for step-by-step guidance
-2. Refer to TASKS.md for detailed task breakdown
-3. Use WORKFLOW.md to understand data flow
-4. Consult TECHSTACK.md for setup instructions
-
----
-
-## 🌟 What Makes This Project Stand Out
-
-1. **Combines Multiple AI Techniques**: NLP + Embeddings + Knowledge Graphs + GenAI
-2. **Production-Grade Architecture**: Orchestration, error handling, persistence
-3. **Solves Real Problems**: Knowledge management is a billion-dollar industry
-4. **End-to-End Thinking**: From data ingestion to user-facing features
-5. **Demonstrates Trade-offs**: Every choice is justified with alternatives
-6. **Interview-Ready**: Comprehensive documentation for career preparation
-
----
-
-## 📞 Next Steps
-
-1. **Read REQUIREMENTS.md**: Understand what the system needs to do
-2. **Read DESIGN.md**: Understand how the system works
-3. **Read TECHSTACK.md**: Understand technology choices
-4. **Read PHASES.md**: Understand the implementation roadmap
-5. **Prepare for interviews**: Use INTERVIEW_GUIDE.md
-
----
-
-## 📄 License
-
-This is an educational project designed for learning and portfolio development.
-
----
+MIT License - feel free to use for learning and portfolio purposes.
 
 ## 🙏 Acknowledgments
 
-This project is designed to teach industry-grade AI system design through comprehensive documentation and conceptual understanding. It combines best practices from production AI systems with educational clarity for learners.
+Built with:
+- Google Gemini for AI capabilities
+- Neo4j for graph database
+- ChromaDB for vector storage
+- FastAPI for backend framework
+- React for frontend framework
+
+## 📧 Contact
+
+For questions or feedback about this project, please open an issue on GitHub.
 
 ---
 
-**Built with 🧠 for deep learning and 💡 for career growth**
-# mini-project122
+**Built for research, powered by AI** 🚀

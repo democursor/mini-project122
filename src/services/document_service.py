@@ -14,7 +14,7 @@ from src.ingestion.validator import PDFValidator
 from src.ingestion.storage import PDFStorage
 from src.orchestration.workflow import DocumentProcessor
 from src.api.models import DocumentMetadata
-from src.utils.config import load_config
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +22,12 @@ class DocumentService:
     """Service for document management"""
     
     def __init__(self):
-        self.config = load_config()
-        self.validator = PDFValidator(self.config)
-        self.storage = PDFStorage(self.config.get('storage', {}).get('pdf_directory', './data/pdfs'))
+        self.config = Config()
+        max_size = self.config.get('storage.max_file_size_mb', 50)
+        pdf_dir = self.config.get('storage.pdf_directory', './data/pdfs')
+        
+        self.validator = PDFValidator(max_file_size_mb=max_size)
+        self.storage = PDFStorage(base_dir=pdf_dir)
         self.processor = DocumentProcessor(self.config)
         self.metadata_file = Path('./data/documents_metadata.json')
         self._ensure_metadata_file()
@@ -65,9 +68,9 @@ class DocumentService:
         """
         try:
             # Validate PDF
-            with open(file_path, 'rb') as f:
-                if not self.validator.validate(f):
-                    raise ValueError("Invalid PDF file")
+            validation_result = self.validator.validate(file_path)
+            if not validation_result.is_valid:
+                raise ValueError(f"Invalid PDF file: {', '.join(validation_result.errors)}")
             
             # Generate document ID
             doc_id = f"doc_{uuid.uuid4().hex[:8]}"
@@ -107,7 +110,7 @@ class DocumentService:
         """
         try:
             logger.info(f"Starting background processing for document {doc_id}")
-            self.processor.process_document(str(pdf_path), doc_id)
+            self.processor.process_document(doc_id)
             
             # Update status
             metadata = self._load_metadata()

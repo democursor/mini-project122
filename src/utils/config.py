@@ -69,3 +69,14 @@ class Config:
             else:
                 return default
         return value
+
+
+# Global config instance
+_config = None
+
+def load_config(env: str = None) -> Dict[str, Any]:
+    """Load and return configuration"""
+    global _config
+    if _config is None:
+        _config = Config(env)
+    return _config.config

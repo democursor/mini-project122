@@ -6,7 +6,6 @@ from typing import List, Optional
 
 from src.graph.queries import GraphQueryEngine
 from src.api.models import GraphStats, PaperNode, ConceptNode, RelatedPaper, ConceptSearchResponse
-from src.utils.config import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -14,13 +13,32 @@ class GraphService:
     """Service for knowledge graph operations"""
     
     def __init__(self):
-        self.config = load_config()
+        from src.utils.config import Config
+        self.config = Config()
         try:
-            self.query_engine = GraphQueryEngine(self.config)
+            from neo4j import GraphDatabase
+            
+            uri = self.config.get('neo4j.uri', 'neo4j://localhost:7687')
+            user = self.config.get('neo4j.user', 'neo4j')
+            password = self.config.get('neo4j.password', '')
+            database = self.config.get('neo4j.database', 'neo4j')
+            
+            # Create Neo4j driver
+            driver = GraphDatabase.driver(uri, auth=(user, password))
+            
+            # Test connection with specific database
+            with driver.session(database=database) as session:
+                session.run("RETURN 1")
+            
+            # Create query engine with driver
+            self.query_engine = GraphQueryEngine(driver, database)
             self.neo4j_available = True
+            logger.info(f"Neo4j connected successfully to {uri}/{database}")
+            
         except Exception as e:
             logger.warning(f"Neo4j not available: {str(e)}")
             self.neo4j_available = False
+            self.query_engine = None
     
     async def get_statistics(self) -> GraphStats:
         """
@@ -29,27 +47,33 @@ class GraphService:
         Returns:
             Graph statistics
         """
+        if not self.neo4j_available or not self.query_engine:
+            logger.info("Neo4j not available, returning empty statistics")
+            return GraphStats(
+                total_papers=0,
+                total_concepts=0,
+                total_mentions=0,
+                total_relationships=0
+            )
+        
         try:
-            if not self.neo4j_available:
-                return GraphStats(
-                    total_papers=0,
-                    total_concepts=0,
-                    total_mentions=0,
-                    total_relationships=0
-                )
-            
             stats = self.query_engine.get_graph_statistics()
             
             return GraphStats(
-                total_papers=stats.get('total_papers', 0),
-                total_concepts=stats.get('total_concepts', 0),
-                total_mentions=stats.get('total_mentions', 0),
-                total_relationships=stats.get('total_relationships', 0)
+                total_papers=stats.get('papers', 0),
+                total_concepts=stats.get('concepts', 0),
+                total_mentions=stats.get('mentions', 0),
+                total_relationships=stats.get('relationships', 0)
             )
             
         except Exception as e:
             logger.error(f"Error getting statistics: {str(e)}")
-            raise
+            return GraphStats(
+                total_papers=0,
+                total_concepts=0,
+                total_mentions=0,
+                total_relationships=0
+            )
     
     async def list_papers(self, limit: int = 50) -> List[PaperNode]:
         """
@@ -61,10 +85,11 @@ class GraphService:
         Returns:
             List of paper nodes
         """
+        if not self.neo4j_available or not self.query_engine:
+            logger.info("Neo4j not available, returning empty paper list")
+            return []
+        
         try:
-            if not self.neo4j_available:
-                return []
-            
             papers = self.query_engine.get_all_papers(limit=limit)
             
             result = []
@@ -81,7 +106,7 @@ class GraphService:
             
         except Exception as e:
             logger.error(f"Error listing papers: {str(e)}")
-            raise
+            return []
     
     async def find_related_papers(
         self,
@@ -98,10 +123,11 @@ class GraphService:
         Returns:
             List of related papers
         """
+        if not self.neo4j_available or not self.query_engine:
+            logger.info("Neo4j not available, returning empty related papers list")
+            return []
+        
         try:
-            if not self.neo4j_available:
-                return []
-            
             related = self.query_engine.find_related_papers(paper_id, limit=limit)
             
             result = []
@@ -123,7 +149,7 @@ class GraphService:
             
         except Exception as e:
             logger.error(f"Error finding related papers: {str(e)}")
-            raise
+            return []
     
     async def list_top_concepts(self, limit: int = 50) -> List[ConceptNode]:
         """
@@ -135,10 +161,11 @@ class GraphService:
         Returns:
             List of concept nodes
         """
+        if not self.neo4j_available or not self.query_engine:
+            logger.info("Neo4j not available, returning empty concepts list")
+            return []
+        
         try:
-            if not self.neo4j_available:
-                return []
-            
             concepts = self.query_engine.get_top_concepts(limit=limit)
             
             result = []
@@ -153,7 +180,7 @@ class GraphService:
             
         except Exception as e:
             logger.error(f"Error listing concepts: {str(e)}")
-            raise
+            return []
     
     async def search_concept(
         self,
@@ -170,14 +197,15 @@ class GraphService:
         Returns:
             Concept search response
         """
+        if not self.neo4j_available or not self.query_engine:
+            logger.info("Neo4j not available, returning empty concept search results")
+            return ConceptSearchResponse(
+                concept=concept_name,
+                papers=[],
+                related_concepts=[]
+            )
+        
         try:
-            if not self.neo4j_available:
-                return ConceptSearchResponse(
-                    concept=concept_name,
-                    papers=[],
-                    related_concepts=[]
-                )
-            
             # Find papers mentioning this concept
             papers_data = self.query_engine.find_papers_by_concept(concept_name, limit=limit)
             
@@ -210,4 +238,8 @@ class GraphService:
             
         except Exception as e:
             logger.error(f"Error searching concept: {str(e)}")
-            raise
+            return ConceptSearchResponse(
+                concept=concept_name,
+                papers=[],
+                related_concepts=[]
+            )

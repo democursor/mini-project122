@@ -4,9 +4,11 @@ Search service - handles semantic search operations
 import logging
 from typing import List, Optional, Dict, Any
 
-from src.vector.search import SemanticSearchEngine
+from src.vector.search import SemanticSearchEngine, QueryProcessor
+from src.vector.embedder import EmbeddingGenerator, EmbeddingConfig
+from src.vector.store import VectorStore
 from src.api.models import SearchResult
-from src.utils.config import load_config
+from src.utils.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +16,22 @@ class SearchService:
     """Service for semantic search"""
     
     def __init__(self):
-        self.config = load_config()
-        self.search_engine = SemanticSearchEngine(self.config)
+        self.config = Config()
+        
+        # Initialize components
+        embedding_config = EmbeddingConfig(
+            model_name=self.config.get('vector.embedding_model', 'all-MiniLM-L6-v2'),
+            device='cpu'
+        )
+        embedding_generator = EmbeddingGenerator(embedding_config)
+        
+        vector_store = VectorStore(
+            persist_directory=self.config.get('vector.persist_directory', './data/chroma')
+        )
+        
+        query_processor = QueryProcessor(embedding_generator)
+        
+        self.search_engine = SemanticSearchEngine(vector_store, query_processor)
     
     async def search(
         self,

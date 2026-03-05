@@ -6,6 +6,12 @@ processing:
   max_concurrent_documents: 10
   retry_attempts: 3
 
+extraction:
+  domain: general  # Options: scientific, biomedical, computer_science, general
+  use_domain_models: false  # Set to false to use lightweight models only
+  max_entities: 50
+  max_keyphrases: 20
+
 logging:
   level: INFO
   file: ./data/logs/app.log

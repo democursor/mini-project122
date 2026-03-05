@@ -34,7 +34,11 @@ class DocumentProcessor:
         self.uploader = PDFUploader(self.validator, self.storage)
         self.parser = PDFParser()
         self.chunker = SemanticChunker(ChunkingConfig())
-        self.extractor = ConceptExtractor()
+        
+        # Initialize extractor with domain configuration
+        domain = config.get('extraction.domain', 'scientific')
+        use_domain_models = config.get('extraction.use_domain_models', True)
+        self.extractor = ConceptExtractor(domain=domain, use_domain_models=use_domain_models)
         
         # Initialize graph builder if Neo4j config exists
         self.graph_builder = None

@@ -19,22 +19,130 @@ An AI-powered platform for processing, analyzing, and querying research papers w
 - Semantic search to find relevant papers by meaning, not just keywords
 - Chat history persistence for continuous research sessions
 
-## 🏗️ Architecture
+## 🏗️ System Architecture
 
-### Backend Stack
-- **FastAPI**: REST API server (Python 3.12)
-- **Neo4j**: Knowledge graph database
-- **ChromaDB**: Vector database for embeddings
-- **Google Gemini**: LLM for AI assistance
-- **SpaCy**: Named entity recognition
-- **KeyBERT**: Keyphrase extraction
-- **sentence-transformers**: Semantic embeddings
+### High-Level Architecture Diagram
 
-### Frontend Stack
-- **React 18**: Modern UI framework
-- **Vite**: Fast build tool
-- **TailwindCSS**: Utility-first styling
-- **Recharts**: Data visualization
+```
+                                    ┌─────────────────────────────────────┐
+                                    │      External AI Services           │
+                                    │  ┌──────────────────────────────┐   │
+                                    │  │  Google Gemini 2.5 Flash     │   │
+                                    │  │  (LLM for RAG & Insights)    │   │
+                                    │  └──────────────────────────────┘   │
+                                    └─────────────────────────────────────┘
+                                                    ↕
+┌──────────────┐                    ┌─────────────────────────────────────┐
+│              │      Requests      │                                     │
+│    Users     │ ──────────────────→│      Backend Services               │
+│              │                    │  ┌──────────────────────────────┐   │
+└──────────────┘                    │  │  Document Service            │   │
+       ↓                            │  │  - Upload & Validation       │   │
+   Requests                         │  │  - Processing Orchestration  │   │
+       ↓                            │  └──────────────────────────────┘   │
+┌──────────────┐                    │  ┌──────────────────────────────┐   │
+│              │      Requests      │  │  Search Service              │   │
+│ Web/Mobile   │ ──────────────────→│  │  - Semantic Search           │   │
+│   Client     │                    │  │  - Vector Similarity         │   │
+│  (React +    │←─────────────────  │  └──────────────────────────────┘   │
+│   Vite)      │     Responses      │  ┌──────────────────────────────┐   │
+│              │                    │  │  Chat Service                │   │
+└──────────────┘                    │  │  - RAG Pipeline              │   │
+                                    │  │  - AI Assistant              │   │
+                                    │  └──────────────────────────────┘   │
+                                    │  ┌──────────────────────────────┐   │
+                                    │  │  Graph Service               │   │
+                                    │  │  - Knowledge Graph Queries   │   │
+                                    │  │  - Relationship Mapping      │   │
+                                    │  └──────────────────────────────┘   │
+                                    └─────────────────────────────────────┘
+                                                    ↕
+                                    ┌─────────────────────────────────────┐
+                                    │      AI/ML Processing Layer         │
+                                    │  ┌──────────────────────────────┐   │
+                                    │  │  spaCy (en_core_web_sm)      │   │
+                                    │  │  - Named Entity Recognition  │   │
+                                    │  └──────────────────────────────┘   │
+                                    │  ┌──────────────────────────────┐   │
+                                    │  │  all-MiniLM-L6-v2            │   │
+                                    │  │  - Sentence Embeddings       │   │
+                                    │  │  - 384-dimensional vectors   │   │
+                                    │  └──────────────────────────────┘   │
+                                    │  ┌──────────────────────────────┐   │
+                                    │  │  KeyBERT                     │   │
+                                    │  │  - Keyword Extraction        │   │
+                                    │  └──────────────────────────────┘   │
+                                    └─────────────────────────────────────┘
+                                                    ↕
+                                    ┌─────────────────────────────────────┐
+                                    │      Data Storage Layer             │
+                                    │                                     │
+                                    │  ┌──────────────┐  ┌────────────┐  │
+                                    │  │  ChromaDB    │  │  Neo4j     │  │
+                                    │  │  (Vector DB) │  │  (Graph DB)│  │
+                                    │  │  - Embeddings│  │  - Concepts│  │
+                                    │  │  - HNSW Index│  │  - Relations│ │
+                                    │  └──────────────┘  └────────────┘  │
+                                    │                                     │
+                                    │  ┌──────────────────────────────┐   │
+                                    │  │  Local File Storage          │   │
+                                    │  │  - PDF Documents             │   │
+                                    │  │  - Parsed Text               │   │
+                                    │  │  - Metadata (JSON)           │   │
+                                    │  └──────────────────────────────┘   │
+                                    └─────────────────────────────────────┘
+```
+
+### Technology Stack
+
+#### Frontend Layer
+- **React 18**: Modern UI framework with hooks
+- **Vite**: Lightning-fast build tool and dev server
+- **TailwindCSS**: Utility-first CSS framework
+- **Lucide React**: Beautiful icon library
+- **Recharts**: Composable charting library
+
+#### Backend Services (FastAPI)
+- **Document Service**: PDF upload, validation, processing orchestration
+- **Search Service**: Semantic search with vector similarity
+- **Chat Service**: RAG pipeline with AI assistant
+- **Graph Service**: Knowledge graph queries and relationship mapping
+
+#### AI/ML Processing
+- **spaCy (en_core_web_sm)**: Named Entity Recognition (12.8 MB)
+- **all-MiniLM-L6-v2**: Sentence embeddings (90 MB, 384 dimensions)
+- **KeyBERT**: Keyword and keyphrase extraction
+- **Google Gemini 2.5 Flash**: LLM for insights and chat responses
+
+#### Data Storage
+- **ChromaDB**: Vector database for embeddings with HNSW indexing
+- **Neo4j**: Graph database for concepts and relationships
+- **Local File System**: PDF storage, parsed text, JSON metadata
+
+### Processing Pipelines
+
+#### Document Processing Pipeline
+```
+PDF Upload → Validation → Text Extraction (PyMuPDF) → 
+Semantic Chunking → Concept Extraction (spaCy + KeyBERT) → 
+Embedding Generation (all-MiniLM-L6-v2) → 
+Storage (ChromaDB + Neo4j + JSON)
+```
+
+#### Search & RAG Pipeline
+```
+User Query → Query Embedding → Vector Search (ChromaDB) → 
+Retrieve Top-K Chunks → Context Augmentation → 
+LLM Generation (Gemini) → Response with Citations
+```
+
+### Key Architecture Decisions
+
+1. **Microservices Pattern**: Separate services for documents, search, chat, and graph operations
+2. **Vector + Graph Hybrid**: ChromaDB for semantic search, Neo4j for relationship mapping
+3. **Lightweight Models**: Using efficient models (103MB total) for fast processing
+4. **RAG Architecture**: Retrieval-Augmented Generation for accurate, cited responses
+5. **Local-First**: PDF storage and processing on local filesystem for privacy
 
 ## 🚀 Quick Start
 

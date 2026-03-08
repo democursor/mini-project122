@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class RAGRetriever:
     """Retrieval component for RAG system."""
     
-    def __init__(self, search_engine: SemanticSearchEngine, max_context_tokens: int = 3000):
+    def __init__(self, search_engine: SemanticSearchEngine, max_context_tokens: int = 6000):
         """
         Initialize RAG retriever.
         

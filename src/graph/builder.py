@@ -244,3 +244,21 @@ class KnowledgeGraphBuilder:
     def _clear_graph_tx(self, tx):
         """Transaction to clear graph"""
         tx.run("MATCH (n) DETACH DELETE n")
+    
+    def delete_paper_node(self, paper_id: str):
+        """Delete a paper node and all its relationships"""
+        with self.driver.session(database=self.database) as session:
+            result = session.execute_write(self._delete_paper_tx, paper_id)
+            logger.info(f"Deleted paper node and relationships: {paper_id}")
+            return result
+    
+    def _delete_paper_tx(self, tx, paper_id: str):
+        """Transaction to delete paper node"""
+        query = """
+        MATCH (p:Paper {id: $paper_id})
+        DETACH DELETE p
+        RETURN count(p) as deleted_count
+        """
+        result = tx.run(query, paper_id=paper_id)
+        record = result.single()
+        return record["deleted_count"] if record else 0

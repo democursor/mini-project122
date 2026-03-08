@@ -61,6 +61,16 @@ class ChatService:
             Chat response with answer and citations
         """
         try:
+            # Check if there are any documents in the vector store
+            total_chunks = self.assistant.retriever.search_engine.vector_store.collection.count()
+            
+            if total_chunks == 0:
+                return ChatResponse(
+                    answer="I don't have any documents to answer your question. Please upload some research papers first.",
+                    citations=[],
+                    sources_count=0
+                )
+            
             # Convert conversation history
             history = []
             if conversation_history:
@@ -73,12 +83,36 @@ class ChatService:
             # Get answer from assistant
             result = self.assistant.ask_question(question)
             
+            # Check if any relevant sources were found
+            if len(result.sources) == 0:
+                return ChatResponse(
+                    answer="I couldn't find any relevant information in the uploaded documents to answer your question. Please try rephrasing your question or upload more relevant documents.",
+                    citations=[],
+                    sources_count=0
+                )
+            
             # Extract citations
             citations = []
             for source in result.sources:
+                # Get document metadata to include title
+                doc_id = source.get('metadata', {}).get('document_id', source.get('document_id', ''))
+                
+                # Try to get document title from metadata file
+                title = 'Untitled'
+                try:
+                    import json
+                    from pathlib import Path
+                    metadata_file = Path('./data/documents_metadata.json')
+                    if metadata_file.exists():
+                        metadata = json.loads(metadata_file.read_text())
+                        if doc_id in metadata:
+                            title = metadata[doc_id].get('filename', 'Untitled')
+                except:
+                    pass
+                
                 citations.append(Citation(
-                    document_id=source.get('document_id', ''),
-                    title=source.get('title', 'Untitled'),
+                    document_id=doc_id,
+                    title=title,
                     excerpt=source.get('text', '')[:300]
                 ))
             

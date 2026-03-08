@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from 'react-query'
-import { Upload as UploadIcon, FileText, CheckCircle, XCircle } from 'lucide-react'
+import { Upload as UploadIcon, FileText, CheckCircle, Loader2, Sparkles, Brain, Database, Network } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { documentsAPI } from '../api/client'
 
@@ -9,8 +9,17 @@ export default function Upload() {
   const [dragActive, setDragActive] = useState(false)
   const queryClient = useQueryClient()
 
+  const processingStages = [
+    { icon: FileText, label: 'Validating PDF', color: 'text-cyan-400' },
+    { icon: FileText, label: 'Extracting Text', color: 'text-blue-400' },
+    { icon: Sparkles, label: 'Semantic Chunking', color: 'text-purple-400' },
+    { icon: Brain, label: 'Extracting Concepts', color: 'text-pink-400' },
+    { icon: Network, label: 'Building Graph', color: 'text-violet-400' },
+    { icon: Database, label: 'Generating Embeddings', color: 'text-cyan-400' },
+  ]
+
   const uploadMutation = useMutation(documentsAPI.upload, {
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Document uploaded successfully!')
       setSelectedFile(null)
       queryClient.invalidateQueries('documents')
@@ -64,116 +73,138 @@ export default function Upload() {
 
   return (
     <div>
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Upload Document</h1>
-        <p className="text-gray-600 mt-2">
-          Upload research papers in PDF format for processing
+        <h1 className="text-4xl font-bold gradient-text neon-text mb-3">Upload Document</h1>
+        <p className="text-gray-400 text-lg">
+          Upload research papers in PDF format for AI-powered processing
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        <div className="card">
+      <div className="max-w-3xl mx-auto">
+        {/* Main Upload Card */}
+        <div className="card-gradient mb-6 border-2 border-slate-700/50">
           {/* Upload Area */}
           <div
             className={`
-              border-2 border-dashed rounded-xl p-12 text-center transition-all
-              ${dragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300'}
-              ${selectedFile ? 'bg-green-50 border-green-500' : ''}
+              border-2 border-dashed rounded-2xl p-16 text-center transition-all duration-300 relative overflow-hidden
+              ${dragActive ? 'border-cyan-500 bg-cyan-500/10 scale-105 shadow-lg shadow-cyan-500/20' : 'border-slate-600'}
+              ${selectedFile ? 'bg-gradient-to-br from-emerald-900/30 to-green-900/20 border-emerald-500/50' : ''}
+              ${uploadMutation.isLoading ? 'border-purple-500/50 bg-gradient-to-br from-purple-900/20 to-pink-900/20' : ''}
             `}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            {selectedFile ? (
-              <div>
-                <CheckCircle className="mx-auto text-green-600 mb-4" size={48} />
-                <p className="text-lg font-medium text-gray-900 mb-2">
-                  {selectedFile.name}
-                </p>
-                <p className="text-sm text-gray-600 mb-4">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-                <button
-                  onClick={() => setSelectedFile(null)}
-                  className="text-red-600 hover:text-red-700 text-sm"
-                >
-                  Remove file
-                </button>
+            {uploadMutation.isLoading ? (
+              /* Processing State */
+              <div className="space-y-6">
+                <div className="relative">
+                  <Loader2 className="mx-auto text-cyan-400 animate-spin drop-shadow-lg" size={64} />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-cyan-500/20 animate-pulse"></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-100 mb-2">
+                    Processing Document
+                  </h3>
+                  <p className="text-gray-400 mb-6">
+                    AI is analyzing your research paper...
+                  </p>
+                </div>
+              </div>
+            ) : selectedFile ? (
+              /* File Selected State */
+              <div className="space-y-4">
+                <div className="relative inline-block">
+                  <CheckCircle className="mx-auto text-emerald-400 drop-shadow-lg" size={64} />
+                  <div className="absolute inset-0 bg-emerald-400 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-100 mb-2">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-lg text-gray-400 mb-4">
+                    {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                  <button
+                    onClick={() => setSelectedFile(null)}
+                    className="text-red-400 hover:text-red-300 font-medium hover:underline transition-all"
+                  >
+                    Remove file
+                  </button>
+                </div>
               </div>
             ) : (
-              <div>
-                <UploadIcon className="mx-auto text-gray-400 mb-4" size={48} />
-                <p className="text-lg font-medium text-gray-900 mb-2">
-                  Drop your PDF here, or click to browse
-                </p>
-                <p className="text-sm text-gray-600 mb-4">
-                  Maximum file size: 50 MB
-                </p>
-                <label className="btn-primary cursor-pointer inline-block">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  Select PDF File
-                </label>
+              /* Upload State */
+              <div className="space-y-6">
+                <div className="relative inline-block">
+                  <UploadIcon className="mx-auto text-gray-500" size={64} />
+                  <div className="absolute inset-0 bg-cyan-400 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-100 mb-2">
+                    Drop your PDF here, or click to browse
+                  </p>
+                  <p className="text-gray-400 mb-6">
+                    Maximum file size: 50 MB
+                  </p>
+                  <label className="btn-primary cursor-pointer inline-flex items-center gap-2 text-lg px-8 py-4">
+                    <UploadIcon size={20} />
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    Select PDF File
+                  </label>
+                </div>
               </div>
             )}
           </div>
 
           {/* Upload Button */}
-          {selectedFile && (
+          {selectedFile && !uploadMutation.isLoading && (
             <button
               onClick={handleUpload}
-              disabled={uploadMutation.isLoading}
-              className="btn-primary w-full mt-6"
+              className="btn-primary w-full mt-6 text-lg py-4 flex items-center justify-center gap-2 neon-glow"
             >
-              {uploadMutation.isLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Uploading...
-                </span>
-              ) : (
-                'Upload and Process'
-              )}
+              <Sparkles size={20} />
+              Upload and Process with AI
             </button>
           )}
+        </div>
 
-          {/* Processing Info */}
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-900 mb-2">
-              What happens after upload?
-            </h3>
-            <ul className="text-sm text-blue-800 space-y-2">
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">1.</span>
-                <span>PDF is validated and stored securely</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">2.</span>
-                <span>Text and metadata are extracted</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">3.</span>
-                <span>Document is chunked semantically</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">4.</span>
-                <span>Concepts and entities are extracted</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">5.</span>
-                <span>Knowledge graph is updated</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-blue-600 mt-0.5">6.</span>
-                <span>Vector embeddings are generated</span>
-              </li>
+        {/* Processing Info Card */}
+        {!uploadMutation.isLoading && (
+          <div className="card bg-gradient-to-br from-slate-800/80 to-blue-900/40 border-2 border-cyan-500/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg shadow-lg shadow-cyan-500/30">
+                <Sparkles className="text-white" size={20} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-100">
+                AI Processing Pipeline
+              </h3>
+            </div>
+            <ul className="space-y-3">
+              {processingStages.map((stage, index) => {
+                const StageIcon = stage.icon
+                return (
+                  <li key={index} className="flex items-center gap-3 text-gray-300">
+                    <div className="p-2 bg-slate-800/80 rounded-lg shadow-sm border border-slate-700">
+                      <StageIcon className={stage.color} size={18} />
+                    </div>
+                    <span className="font-medium">{stage.label}</span>
+                  </li>
+                )
+              })}
             </ul>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

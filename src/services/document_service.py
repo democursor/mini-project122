@@ -200,18 +200,45 @@ class DocumentService:
             True if deleted, False if not found
         """
         try:
-            # Delete from storage
+            # Check if document exists
+            metadata = self._load_metadata()
+            if document_id not in metadata:
+                return False
+            
+            # Delete from ChromaDB (vector embeddings)
+            try:
+                from src.vector.store import VectorStore
+                vector_store = VectorStore(
+                    persist_directory=self.config.get('vector.persist_directory', './data/chroma')
+                )
+                vector_store.delete_document_chunks(document_id)
+                logger.info(f"Deleted vector embeddings for document {document_id}")
+            except Exception as e:
+                logger.error(f"Error deleting from ChromaDB: {e}")
+            
+            # Delete from Neo4j (knowledge graph)
+            try:
+                from src.graph.builder import KnowledgeGraphBuilder
+                graph_builder = KnowledgeGraphBuilder(
+                    uri=self.config.get('neo4j.uri'),
+                    user=self.config.get('neo4j.user'),
+                    password=self.config.get('neo4j.password'),
+                    database=self.config.get('neo4j.database')
+                )
+                graph_builder.delete_paper_node(document_id)
+                graph_builder.close()
+                logger.info(f"Deleted knowledge graph data for document {document_id}")
+            except Exception as e:
+                logger.error(f"Error deleting from Neo4j: {e}")
+            
+            # Delete from file storage
             success = self.storage.delete(document_id)
             
             if success:
                 # Remove from metadata
-                metadata = self._load_metadata()
-                if document_id in metadata:
-                    del metadata[document_id]
-                    self._save_metadata(metadata)
-                
-                # TODO: Delete from Neo4j and ChromaDB
-                logger.info(f"Document {document_id} deleted")
+                del metadata[document_id]
+                self._save_metadata(metadata)
+                logger.info(f"Document {document_id} fully deleted from all systems")
             
             return success
             

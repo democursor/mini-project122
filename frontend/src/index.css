@@ -4,45 +4,55 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-950 text-gray-100;
+    min-height: 100vh;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-2.5 rounded-lg hover:from-cyan-400 hover:to-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40 font-medium;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors;
+    @apply bg-slate-800/80 text-gray-200 px-6 py-2.5 rounded-lg hover:bg-slate-700/80 transition-all duration-200 border border-slate-600 shadow-sm hover:shadow-md font-medium backdrop-blur-sm;
   }
   
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply bg-slate-800/60 backdrop-blur-md rounded-2xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl hover:border-cyan-500/30 transition-all duration-300;
+  }
+  
+  .card-gradient {
+    @apply bg-gradient-to-br from-slate-800/80 to-blue-900/40 backdrop-blur-md rounded-2xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl hover:border-cyan-500/30 transition-all duration-300;
   }
   
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all;
+    @apply w-full px-4 py-3 border border-slate-600 rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition-all bg-slate-800/50 backdrop-blur-sm text-gray-100 placeholder-gray-400;
+  }
+  
+  .stat-card {
+    @apply bg-gradient-to-br from-slate-800/80 to-blue-900/60 backdrop-blur-md rounded-2xl shadow-xl border border-slate-700/50 p-6 hover:shadow-2xl hover:scale-105 hover:border-cyan-500/50 transition-all duration-300 cursor-pointer;
   }
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1e293b;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #06b6d4, #3b82f6);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: linear-gradient(180deg, #0891b2, #2563eb);
 }
 
 /* Loading animation */
@@ -52,4 +62,54 @@
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.8);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Progress bar animation */
+@keyframes progress {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.animate-progress {
+  animation: progress 20s linear forwards;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent;
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+/* Neon glow effect */
+.neon-glow {
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.5),
+              0 0 40px rgba(6, 182, 212, 0.3),
+              0 0 60px rgba(6, 182, 212, 0.2);
+}
+
+.neon-text {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.8),
+               0 0 20px rgba(6, 182, 212, 0.6),
+               0 0 30px rgba(6, 182, 212, 0.4);
 }

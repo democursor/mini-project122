@@ -86,6 +86,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     question: str = Field(..., description="User question")
     conversation_history: Optional[List[ChatMessage]] = None
+    session_id: Optional[str] = None
 
 class Citation(BaseModel):
     document_id: str
@@ -96,3 +97,27 @@ class ChatResponse(BaseModel):
     answer: str
     citations: List[Citation]
     sources_count: int
+    session_id: Optional[str] = None
+
+class ChatSessionResponse(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    created_at: str
+    updated_at: str
+
+class ChatSessionListResponse(BaseModel):
+    sessions: List[ChatSessionResponse]
+    total: int
+
+class ChatMessageResponse(BaseModel):
+    id: str
+    session_id: str
+    role: str
+    content: str
+    citations: list = []
+    created_at: str
+
+class ChatMessageListResponse(BaseModel):
+    messages: List[ChatMessageResponse]
+    session_id: str

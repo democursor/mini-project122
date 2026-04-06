@@ -1,192 +1,137 @@
 import { useState } from 'react'
 import { useQuery } from 'react-query'
-import { Network, FileText, Tag, TrendingUp } from 'lucide-react'
+import { Network, FileText, Tag, GitBranch, Hash, Layers } from 'lucide-react'
 import { graphAPI } from '../api/client'
 
-export default function KnowledgeGraph() {
-  const [selectedPaper, setSelectedPaper] = useState(null)
-  
-  const { data: stats } = useQuery('graphStats', graphAPI.stats)
-  const { data: papers } = useQuery('papers', () => graphAPI.papers(20))
-  const { data: concepts } = useQuery('concepts', () => graphAPI.concepts(30))
-  const { data: relatedPapers } = useQuery(
-    ['relatedPapers', selectedPaper],
-    () => graphAPI.relatedPapers(selectedPaper),
-    { enabled: !!selectedPaper }
-  )
+const STATS = [
+  { key:'total_papers',        label:'Papers',        icon:FileText,  color:'var(--amber)',   dim:'var(--amber-dim)',   border:'var(--amber-border)',  top:'2px solid var(--amber)',   cls:'card-3d-amber' },
+  { key:'total_concepts',      label:'Concepts',      icon:Tag,       color:'var(--cyan)',    dim:'var(--cyan-dim)',    border:'var(--cyan-border)',   top:'2px solid var(--cyan)',    cls:'card-3d-cyan' },
+  { key:'total_mentions',      label:'Mentions',      icon:Hash,      color:'var(--violet)',  dim:'var(--violet-dim)', border:'var(--violet-border)', top:'2px solid var(--violet)',  cls:'card-3d-violet' },
+  { key:'total_relationships', label:'Relationships', icon:GitBranch, color:'var(--emerald)', dim:'var(--emerald-dim)',border:'var(--emerald-border)',top:'2px solid var(--emerald)',cls:'card-3d-emerald' },
+]
 
-  const statsData = stats?.data || {}
-  const papersList = papers?.data || []
+export default function KnowledgeGraph() {
+  const [selectedPaper,setSelectedPaper] = useState(null)
+  const { data:stats }    = useQuery('graphStats', graphAPI.stats)
+  const { data:papers }   = useQuery('papers',     ()=>graphAPI.papers(20))
+  const { data:concepts } = useQuery('concepts',   ()=>graphAPI.concepts(30))
+
+  const statsData    = stats?.data || {}
+  const papersList   = papers?.data || []
   const conceptsList = concepts?.data || []
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Knowledge Graph</h1>
-        <p className="text-gray-600 mt-2">
-          Explore relationships between papers and concepts
-        </p>
+        <div className="section-title mb-2">Intelligence</div>
+        <h1 className="page-header-title">Knowledge Graph</h1>
+        <p className="page-header-sub">Explore relationships between papers and concepts</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Papers</p>
-              <p className="text-2xl font-bold mt-1">{statsData.total_papers || 0}</p>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,minmax(0,1fr))',gap:'12px',marginBottom:'24px'}}>
+        {STATS.map(s=>{
+          const Icon=s.icon
+          return (
+            <div key={s.key} className={`stat-card card-3d ${s.cls}`} style={{borderTop:s.top,cursor:'default'}}>
+              <div style={{width:'36px',height:'36px',borderRadius:'10px',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'14px',background:s.dim,border:`1px solid ${s.border}`}}>
+                <Icon size={16} style={{color:s.color}}/>
+              </div>
+              <div className="stat-card-num mb-1">{statsData[s.key]||0}</div>
+              <div className="stat-card-label">{s.label}</div>
+              <Icon size={56} style={{position:'absolute',bottom:8,right:8,color:s.color,opacity:0.04}}/>
             </div>
-            <FileText className="text-blue-500" size={32} />
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Concepts</p>
-              <p className="text-2xl font-bold mt-1">{statsData.total_concepts || 0}</p>
-            </div>
-            <Tag className="text-green-500" size={32} />
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Mentions</p>
-              <p className="text-2xl font-bold mt-1">{statsData.total_mentions || 0}</p>
-            </div>
-            <TrendingUp className="text-purple-500" size={32} />
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Relationships</p>
-              <p className="text-2xl font-bold mt-1">{statsData.total_relationships || 0}</p>
-            </div>
-            <Network className="text-orange-500" size={32} />
-          </div>
-        </div>
+          )
+        })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Two panels */}
+      <div style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)',gap:'16px',marginBottom:'16px'}}>
         {/* Papers */}
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <FileText size={20} />
-            Papers in Graph
-          </h2>
-          
-          {papersList.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No papers in graph yet
-            </p>
+        <div className="glass" style={{padding:'20px',border:'1px solid var(--border-subtle)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px'}}>
+            <div style={{width:'30px',height:'30px',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--amber-dim)',border:'1px solid var(--amber-border)'}}>
+              <FileText size={14} style={{color:'var(--amber)'}}/>
+            </div>
+            <span style={{fontSize:'13px',fontWeight:700,color:'var(--text-secondary)',fontFamily:'var(--font-display)'}}>Papers in Graph</span>
+          </div>
+          {papersList.length===0 ? (
+            <div style={{textAlign:'center',padding:'40px 20px'}}>
+              <div style={{width:'64px',height:'64px',borderRadius:'50%',border:'2px dashed var(--border-strong)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
+                <FileText size={24} style={{color:'var(--text-faint)'}}/>
+              </div>
+              <div style={{fontSize:'13px',color:'var(--text-muted)',fontFamily:'var(--font-display)',fontWeight:600,marginBottom:'4px'}}>No papers in graph yet</div>
+              <div style={{fontSize:'11px',color:'var(--text-faint)'}}>Upload and process papers first</div>
+            </div>
           ) : (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {papersList.map((paper) => (
-                <div
-                  key={paper.id}
-                  onClick={() => setSelectedPaper(paper.id)}
-                  className={`
-                    p-3 rounded-lg cursor-pointer transition-all
-                    ${selectedPaper === paper.id 
-                      ? 'bg-primary-50 border-2 border-primary-500' 
-                      : 'bg-gray-50 hover:bg-gray-100 border-2 border-transparent'}
-                  `}
-                >
-                  <h3 className="font-medium text-gray-900 mb-1">
-                    {paper.title}
-                  </h3>
-                  {paper.authors && paper.authors.length > 0 && (
-                    <p className="text-sm text-gray-600">
-                      {paper.authors.join(', ')}
-                    </p>
-                  )}
-                  {paper.year && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {paper.year}
-                    </p>
-                  )}
+            <div style={{display:'flex',flexDirection:'column',gap:'6px',maxHeight:'320px',overflowY:'auto'}}>
+              {papersList.map(paper=>(
+                <div key={paper.id} onClick={()=>setSelectedPaper(paper.id)}
+                  style={{
+                    padding:'10px 12px',borderRadius:'10px',cursor:'pointer',
+                    background:selectedPaper===paper.id?'var(--amber-dim)':'var(--bg-elevated)',
+                    border:`1px solid ${selectedPaper===paper.id?'var(--amber-border)':'var(--border-subtle)'}`,
+                    transition:'all 0.15s ease'
+                  }}
+                  onMouseEnter={e=>{if(selectedPaper!==paper.id){e.currentTarget.style.background='var(--bg-hover)'}}}
+                  onMouseLeave={e=>{if(selectedPaper!==paper.id){e.currentTarget.style.background='var(--bg-elevated)'}}}>
+                  <div style={{fontSize:'12px',fontWeight:700,color:selectedPaper===paper.id?'var(--amber)':'var(--text-primary)',fontFamily:'var(--font-display)',marginBottom:'3px'}}>{paper.title}</div>
+                  {paper.authors?.length>0 && <div style={{fontSize:'11px',color:'var(--text-muted)'}}>{paper.authors.join(', ')}</div>}
+                  {paper.year && <div style={{fontSize:'10px',color:'var(--text-faint)',fontFamily:'var(--font-mono)',marginTop:'2px'}}>{paper.year}</div>}
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Top Concepts */}
-        <div className="card">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Tag size={20} />
-            Top Concepts
-          </h2>
-          
-          {conceptsList.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No concepts extracted yet
-            </p>
+        {/* Concepts */}
+        <div className="glass" style={{padding:'20px',border:'1px solid var(--border-subtle)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px'}}>
+            <div style={{width:'30px',height:'30px',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--violet-dim)',border:'1px solid var(--violet-border)'}}>
+              <Tag size={14} style={{color:'var(--violet)'}}/>
+            </div>
+            <span style={{fontSize:'13px',fontWeight:700,color:'var(--text-secondary)',fontFamily:'var(--font-display)'}}>Top Concepts</span>
+          </div>
+          {conceptsList.length===0 ? (
+            <div style={{textAlign:'center',padding:'40px 20px'}}>
+              <div style={{width:'64px',height:'64px',borderRadius:'50%',border:'2px dashed var(--border-strong)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px'}}>
+                <Tag size={24} style={{color:'var(--text-faint)'}}/>
+              </div>
+              <div style={{fontSize:'13px',color:'var(--text-muted)',fontFamily:'var(--font-display)',fontWeight:600,marginBottom:'4px'}}>No concepts extracted yet</div>
+              <div style={{fontSize:'11px',color:'var(--text-faint)'}}>Process documents to extract concepts</div>
+            </div>
           ) : (
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {conceptsList.map((concept, index) => (
-                <div
-                  key={concept.name}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-500">
-                      #{index + 1}
-                    </span>
-                    <span className="font-medium text-gray-900">
-                      {concept.name}
-                    </span>
-                  </div>
-                  <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
-                    {concept.frequency}
-                  </span>
-                </div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'8px',maxHeight:'320px',overflowY:'auto'}}>
+              {conceptsList.map(concept=>(
+                <button key={concept.name} className="concept-chip"
+                  style={{fontSize:`${Math.min(11+(concept.frequency/8),16)}px`}}>
+                  {concept.name}
+                </button>
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* Related Papers */}
-      {selectedPaper && relatedPapers && (
-        <div className="card mt-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Network size={20} />
-            Related Papers
-          </h2>
-          
-          {relatedPapers.data?.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No related papers found
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {relatedPapers.data?.map((item) => (
-                <div key={item.paper.id} className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-2">
-                    {item.paper.title}
-                  </h3>
-                  {item.paper.authors && item.paper.authors.length > 0 && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      {item.paper.authors.join(', ')}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-primary-600">
-                      {item.shared_concepts} shared concepts
-                    </span>
-                    <span className="text-gray-500">
-                      {(item.similarity_score * 100).toFixed(0)}% similar
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Graph placeholder */}
+      {papersList.length===0 && conceptsList.length===0 && (
+        <div className="glass text-center" style={{padding:'52px',border:'1px solid var(--border-subtle)'}}>
+          <div style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:'10px',maxWidth:'180px',margin:'0 auto 20px'}}>
+            {Array.from({length:16}).map((_,i)=>(
+              <div key={i} style={{
+                width:i%5===0?10:6,height:i%5===0?10:6,borderRadius:'50%',
+                background:i%5===0?'var(--amber)':'var(--border-default)',
+                animation:`glow-pulse ${1.5+(i%4)*0.3}s ease-in-out ${i*0.1}s infinite`,
+                boxShadow:i%5===0?'0 0 8px var(--amber-glow)':'none'
+              }}/>
+            ))}
+          </div>
+          <div style={{fontFamily:'var(--font-display)',fontSize:'15px',fontWeight:700,color:'var(--text-secondary)',marginBottom:'8px'}}>
+            Graph visualization ready
+          </div>
+          <div style={{fontSize:'13px',color:'var(--text-muted)'}}>
+            Upload and process papers to explore concept relationships
+          </div>
         </div>
       )}
     </div>

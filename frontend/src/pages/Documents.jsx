@@ -1,129 +1,143 @@
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { FileText, Trash2, Calendar, User } from 'lucide-react'
+import { useState } from 'react'
+import { FileText, Trash2, Eye, Search as SearchIcon, Upload, Clock, Filter } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { documentsAPI } from '../api/client'
+import { Link, useNavigate } from 'react-router-dom'
+
+function getRelativeTime(d) {
+  if (!d) return 'Unknown'
+  const diff = Math.floor((new Date()-new Date(d))/1000)
+  if (diff<60) return 'Just now'
+  if (diff<3600) return `${Math.floor(diff/60)}m ago`
+  if (diff<86400) return `${Math.floor(diff/3600)}h ago`
+  if (diff<604800) return `${Math.floor(diff/86400)}d ago`
+  return new Date(d).toLocaleDateString()
+}
+
+const ACCENTS = [
+  {dim:'var(--amber-dim)',  border:'var(--amber-border)',  color:'var(--amber)'},
+  {dim:'var(--violet-dim)', border:'var(--violet-border)', color:'var(--violet)'},
+  {dim:'var(--cyan-dim)',   border:'var(--cyan-border)',   color:'var(--cyan)'},
+  {dim:'var(--emerald-dim)',border:'var(--emerald-border)',color:'var(--emerald)'},
+]
 
 export default function Documents() {
   const queryClient = useQueryClient()
-  const { data, isLoading } = useQuery('documents', documentsAPI.list)
+  const navigate = useNavigate()
+  const {data,isLoading} = useQuery('documents', documentsAPI.list)
+  const [hovered,setHovered] = useState(null)
+  const [search,setSearch] = useState('')
 
   const deleteMutation = useMutation(documentsAPI.delete, {
-    onSuccess: () => {
-      toast.success('Document deleted successfully')
-      queryClient.invalidateQueries('documents')
-    },
-    onError: () => {
-      toast.error('Failed to delete document')
-    },
+    onSuccess: ()=>{ toast.success('Document deleted'); queryClient.invalidateQueries('documents') },
+    onError: ()=> toast.error('Failed to delete document'),
   })
 
-  const handleDelete = (id, filename) => {
-    if (window.confirm(`Delete "${filename}"?`)) {
-      deleteMutation.mutate(id)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    )
-  }
-
   const documents = data?.data?.documents || []
+  const filtered = documents.filter(d=>(d.title||d.filename).toLowerCase().includes(search.toLowerCase()))
+
+  if (isLoading) return (
+    <div>
+      <div className="mb-8">
+        <div className="section-title mb-2">Library</div>
+        <h1 className="page-header-title">Documents</h1>
+        <p className="page-header-sub">Manage your uploaded research papers</p>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        {[1,2,3].map(i=><div key={i} className="skeleton" style={{height:'86px',borderRadius:'16px'}}/>)}
+      </div>
+    </div>
+  )
 
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8" style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:'16px'}}>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Documents</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your uploaded research papers
-          </p>
+          <div className="section-title mb-2">Library</div>
+          <h1 className="page-header-title">Documents</h1>
+          <p className="page-header-sub">{documents.length} paper{documents.length!==1?'s':''} in your collection</p>
         </div>
-        <div className="text-sm text-gray-600">
-          Total: {documents.length} documents
+        <div style={{display:'flex',alignItems:'center',gap:'10px',flexShrink:0}}>
+          <div style={{display:'flex',alignItems:'center',gap:'8px',background:'var(--bg-surface)',border:'1px solid var(--border-default)',borderRadius:'10px',padding:'0 12px',height:'38px',transition:'all 0.2s'}}
+            onFocusCapture={e=>e.currentTarget.style.borderColor='var(--violet)'}
+            onBlurCapture={e=>e.currentTarget.style.borderColor='var(--border-default)'}>
+            <SearchIcon size={13} style={{color:'var(--text-muted)'}}/>
+            <input type="text" placeholder="Filter documents..." value={search} onChange={e=>setSearch(e.target.value)}
+              style={{background:'transparent',border:'none',outline:'none',fontSize:'13px',color:'var(--text-primary)',width:'160px',fontFamily:'var(--font-body)'}}/>
+          </div>
+          <Link to="/upload">
+            <button className="btn-amber"><Upload size={13}/> Upload New</button>
+          </Link>
         </div>
       </div>
 
-      {documents.length === 0 ? (
-        <div className="card text-center py-12">
-          <FileText className="mx-auto text-gray-400 mb-4" size={48} />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No documents yet
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Upload your first research paper to get started
-          </p>
-          <a href="/upload" className="btn-primary inline-block">
-            Upload Document
-          </a>
+      {filtered.length===0 ? (
+        <div className="glass text-center" style={{padding:'60px 24px',border:'1px solid var(--border-subtle)'}}>
+          <div style={{width:'60px',height:'60px',borderRadius:'18px',background:'var(--bg-elevated)',border:'1px solid var(--border-default)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px'}}>
+            <FileText size={26} style={{color:'var(--text-faint)'}}/>
+          </div>
+          <div style={{fontSize:'15px',fontWeight:700,color:'var(--text-secondary)',fontFamily:'var(--font-display)',marginBottom:'6px'}}>
+            {search?'No documents found':'No documents yet'}
+          </div>
+          <div style={{fontSize:'13px',color:'var(--text-faint)',marginBottom:'20px'}}>
+            {search?'Try a different search term':'Upload your first research paper to get started'}
+          </div>
+          {!search && <Link to="/upload"><button className="btn-amber"><Upload size={14}/> Upload Paper</button></Link>}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {documents.map((doc) => (
-            <div key={doc.document_id} className="card hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="p-3 bg-primary-50 rounded-lg">
-                    <FileText className="text-primary-600" size={24} />
+        <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+          {filtered.map((doc,i)=>{
+            const ac = ACCENTS[i%ACCENTS.length]
+            const keywords = doc.keywords?.slice(0,3)||[]
+            const isHov = hovered===doc.document_id
+            return (
+              <div key={doc.document_id} className="card-3d glass"
+                style={{padding:'14px 18px',cursor:'pointer',border:`1px solid ${isHov?ac.border:'var(--border-subtle)'}`,borderRadius:'16px',transition:'all 0.3s cubic-bezier(.34,1.56,.64,1)'}}
+                onMouseEnter={()=>setHovered(doc.document_id)}
+                onMouseLeave={()=>setHovered(null)}>
+                <div style={{display:'flex',alignItems:'center',gap:'14px'}}>
+                  <div style={{width:'42px',height:'42px',borderRadius:'12px',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,background:ac.dim,border:`1px solid ${ac.border}`,boxShadow:isHov?`0 0 16px ${ac.color}33`:'none',transition:'box-shadow 0.3s'}}>
+                    <FileText size={18} style={{color:ac.color}}/>
                   </div>
-                  
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {doc.title || doc.filename}
-                    </h3>
-                    
-                    {doc.authors && doc.authors.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                        <User size={14} />
-                        <span>{doc.authors.join(', ')}</span>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:'13px',fontWeight:700,color:'var(--text-primary)',fontFamily:'var(--font-display)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginBottom:'4px'}}
+                      title={doc.title||doc.filename}>
+                      {doc.title||doc.filename}
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:'5px',fontSize:'11px',color:'var(--text-muted)',marginBottom:'6px'}}>
+                      <Clock size={10}/> {getRelativeTime(doc.upload_date||doc.created_at)}
+                      {doc.pages&&<span>· {doc.pages} pages</span>}
+                    </div>
+                    {keywords.length>0 && (
+                      <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
+                        {keywords.map((kw,j)=><span key={j} className="kw-pill">{kw}</span>)}
                       </div>
                     )}
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      {doc.year && (
-                        <span className="flex items-center gap-1">
-                          <Calendar size={14} />
-                          {doc.year}
-                        </span>
-                      )}
-                      {doc.pages && (
-                        <span>{doc.pages} pages</span>
-                      )}
-                      {doc.upload_date && (
-                        <span>
-                          Uploaded: {new Date(doc.upload_date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="mt-3">
-                      <span className={`
-                        px-3 py-1 rounded-full text-xs font-medium
-                        ${doc.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                          doc.status === 'processing' ? 'bg-yellow-100 text-yellow-700' : 
-                          doc.status === 'failed' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'}
-                      `}>
-                        {doc.status}
-                      </span>
-                    </div>
+                  </div>
+                  <span className={`badge badge-${doc.status==='completed'?'done':doc.status==='processing'?'processing':'done'}`} style={{flexShrink:0}}>
+                    {doc.status==='processing'&&<div className="dot-pulse" style={{width:'5px',height:'5px',marginRight:'4px'}}/>}
+                    {doc.status||'completed'}
+                  </span>
+                  <div style={{display:'flex',alignItems:'center',gap:'6px',flexShrink:0,opacity:isHov?1:0,transition:'opacity 0.15s'}}>
+                    {[
+                      {icon:Eye,  label:'View',   onClick:()=>navigate(`/documents/${doc.document_id}`), hBg:'var(--amber-dim)',   hBdr:'var(--amber-border)'},
+                      {icon:SearchIcon,label:'Search',onClick:()=>navigate('/search'), hBg:'var(--violet-dim)',  hBdr:'var(--violet-border)'},
+                      {icon:Trash2,label:'Delete', onClick:()=>{if(window.confirm(`Delete "${doc.title||doc.filename}"?`))deleteMutation.mutate(doc.document_id)}, hBg:'var(--rose-dim)', hBdr:'var(--rose-border)'},
+                    ].map(({icon:Icon,label,onClick,hBg,hBdr})=>(
+                      <button key={label} title={label}
+                        onClick={e=>{e.stopPropagation();onClick()}}
+                        style={{width:'28px',height:'28px',borderRadius:'8px',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg-elevated)',border:'1px solid var(--border-subtle)',cursor:'pointer',transition:'all 0.15s'}}
+                        onMouseEnter={e=>{e.currentTarget.style.background=hBg;e.currentTarget.style.borderColor=hBdr}}
+                        onMouseLeave={e=>{e.currentTarget.style.background='var(--bg-elevated)';e.currentTarget.style.borderColor='var(--border-subtle)'}}>
+                        <Icon size={13} style={{color:'var(--text-muted)'}}/>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                
-                <button
-                  onClick={() => handleDelete(doc.document_id, doc.filename)}
-                  disabled={deleteMutation.isLoading}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Delete document"
-                >
-                  <Trash2 size={20} />
-                </button>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

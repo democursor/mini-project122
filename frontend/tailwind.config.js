@@ -1,25 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
-      colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-        }
-      }
+      fontFamily: {
+        display: ['Outfit', 'sans-serif'],
+        body:    ['DM Sans', 'sans-serif'],
+        mono:    ['Fira Code', 'monospace'],
+      },
+      animation: {
+        'fade-in':     'fade-page 0.35s ease forwards',
+        'slide-up':    'slide-up 0.25s ease forwards',
+        'spin-slow':   'spin 2s linear infinite',
+        'glow-pulse':  'glow-pulse 3s ease-in-out infinite',
+        'orb-float':   'orb-float 20s ease-in-out infinite',
+        'shimmer':     'shimmer 1.6s infinite linear',
+      },
     },
   },
   plugins: [],

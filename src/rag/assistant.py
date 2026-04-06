@@ -32,9 +32,11 @@ class ResearchAssistant:
     
     def ask_question(
         self, 
-        question: str, 
-        top_k: int = 5,
-        use_conversation_context: bool = False
+        question: str,
+        conversation_history: list = None,
+        top_k: int = 8,
+        use_conversation_context: bool = False,
+        use_graph: bool = False
     ) -> RAGResponse:
         """
         Answer research question using RAG pipeline.
@@ -57,8 +59,51 @@ class ResearchAssistant:
         try:
             logger.info(f"Processing question: {question[:100]}...")
             
-            # Step 1: Retrieve context
-            context = self.retriever.retrieve_context(question, top_k)
+            # Step 1: Retrieve context with graph enhancement if available
+            # Retrieve chunks — graph-enhanced if Neo4j available, else ChromaDB only
+            if use_graph:
+                try:
+                    from src.graph.neo4j_client import Neo4jClient
+                    from src.graph.searcher import GraphSearcher
+                    neo4j_client = Neo4jClient()
+                    graph_searcher = GraphSearcher(neo4j_client)
+                    
+                    # Get related concepts from graph to expand query
+                    graph_concepts = []
+                    try:
+                        graph_concepts = graph_searcher.get_related_concepts(question, limit=5)
+                    except Exception:
+                        graph_concepts = []
+                    
+                    # Expand query with graph concepts for better retrieval
+                    expanded_query = question
+                    if graph_concepts:
+                        concept_terms = " ".join([c.get('name', '') for c in graph_concepts])
+                        expanded_query = f"{question} {concept_terms}"
+                        logger.info(f"Query expanded with concepts: {concept_terms}")
+                    
+                    context = self.retriever.retrieve_context(expanded_query, top_k)
+                    neo4j_client.close()
+                except Exception as e:
+                    logger.warning(f"Graph retrieval failed, falling back to ChromaDB: {e}")
+                    context = self.retriever.retrieve_context(question, top_k)
+            else:
+                # ChromaDB only retrieval
+                context = self.retriever.retrieve_context(question, top_k)
+            
+            # If no chunks found from either source
+            if not context.retrieved_chunks:
+                return RAGResponse(
+                    answer="I couldn't find relevant information in the uploaded documents. Please try rephrasing your question.",
+                    sources=[],
+                    citations={'total_citations': 0, 'citation_accuracy': 0.0},
+                    retrieval_stats={
+                        "chunks_retrieved": 0,
+                        "total_found": 0,
+                        "retrieval_time": 0,
+                        "context_length": 0
+                    }
+                )
             
             # Step 2: Format prompt
             if use_conversation_context and self.conversation_history:

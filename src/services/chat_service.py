@@ -80,8 +80,29 @@ class ChatService:
                         'content': msg.content
                     })
             
+            # Try Neo4j enhanced retrieval first, fallback to ChromaDB
+            neo4j_available = False
+            try:
+                from src.graph.neo4j_client import Neo4jClient
+                neo4j_client = Neo4jClient()
+                neo4j_available = neo4j_client.is_connected()
+                if neo4j_available:
+                    neo4j_client.close()
+            except Exception:
+                neo4j_available = False
+            
+            if neo4j_available:
+                logger.info("Neo4j connected — using graph-enhanced retrieval")
+            else:
+                logger.info("Neo4j not available — using ChromaDB only")
+            
             # Get answer from assistant
-            result = self.assistant.ask_question(question)
+            result = self.assistant.ask_question(
+                question=question,
+                conversation_history=history,
+                top_k=8,
+                use_graph=neo4j_available
+            )
             
             # Check if any relevant sources were found
             if len(result.sources) == 0:

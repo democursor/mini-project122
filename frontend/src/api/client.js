@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { supabase } from '../lib/supabase'
 
 const API_BASE_URL = 'http://localhost:8000/api'
 
@@ -8,6 +9,36 @@ const client = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+// Add request interceptor to include JWT token
+client.interceptors.request.use(
+  async (config) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.access_token) {
+      config.headers.Authorization = `Bearer ${session.access_token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Add response interceptor to handle 401 errors
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Token might be expired, try to refresh
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        // No valid session, redirect to login
+        window.location.href = '/login'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 // Documents API
 export const documentsAPI = {

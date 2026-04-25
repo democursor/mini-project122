@@ -99,3 +99,41 @@ Thumbs.db
 # *.pt
 # *.pth
 # *.onnx
+
+# Backup Folders
+enhanced/
+frontend_old_backup/
+*_backup/
+*.backup
+
+# Package Manager Locks (keep package.json and requirements.txt)
+# Uncomment if you want to ignore lock files
+# package-lock.json
+# yarn.lock
+# poetry.lock
+
+# Editor Specific
+*.sublime-project
+*.sublime-workspace
+.vscode/settings.json
+.vscode/launch.json
+
+# Documentation Build
+docs/_build/
+site/
+
+# Secrets and Credentials
+*.pem
+*.key
+*.cert
+secrets.json
+credentials.json
+
+# Large Files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.zip
+*.tar.gz
+*.rar

@@ -7,6 +7,7 @@ from typing import List, Optional
 from src.rag.assistant import ResearchAssistant
 from src.rag.retriever import RAGRetriever
 from src.rag.llm_client import LLMClient
+from src.rag.agentic_pipeline import AgenticRAGPipeline
 from src.vector.search import SemanticSearchEngine, QueryProcessor
 from src.vector.embedder import EmbeddingGenerator, EmbeddingConfig
 from src.vector.store import VectorStore
@@ -44,18 +45,21 @@ class ChatService:
         )
         
         self.assistant = ResearchAssistant(retriever, llm_client)
+        self.agentic_pipeline = AgenticRAGPipeline(retriever, llm_client)
     
     async def answer_question(
         self,
         question: str,
-        conversation_history: Optional[List[ChatMessage]] = None
+        conversation_history: Optional[List[ChatMessage]] = None,
+        use_agentic: bool = True
     ) -> ChatResponse:
         """
-        Answer a question using RAG
+        Answer a question using RAG (with optional agentic pipeline)
         
         Args:
             question: User question
             conversation_history: Previous conversation
+            use_agentic: Whether to use agentic multi-step pipeline
             
         Returns:
             Chat response with answer and citations
@@ -71,16 +75,7 @@ class ChatService:
                     sources_count=0
                 )
             
-            # Convert conversation history
-            history = []
-            if conversation_history:
-                for msg in conversation_history:
-                    history.append({
-                        'role': msg.role,
-                        'content': msg.content
-                    })
-            
-            # Try Neo4j enhanced retrieval first, fallback to ChromaDB
+            # Check Neo4j availability
             neo4j_available = False
             try:
                 from src.graph.neo4j_client import Neo4jClient
@@ -96,52 +91,103 @@ class ChatService:
             else:
                 logger.info("Neo4j not available — using ChromaDB only")
             
-            # Get answer from assistant
-            result = self.assistant.ask_question(
-                question=question,
-                conversation_history=history,
-                top_k=8,
-                use_graph=neo4j_available
-            )
-            
-            # Check if any relevant sources were found
-            if len(result.sources) == 0:
+            # Use agentic pipeline if enabled
+            if use_agentic:
+                logger.info("Using agentic multi-step RAG pipeline")
+                result = self.agentic_pipeline.process_query(
+                    query=question,
+                    top_k_per_query=5,
+                    use_graph=neo4j_available
+                )
+                
+                # Check if any sources found
+                if not result['sources']:
+                    return ChatResponse(
+                        answer="I couldn't find any relevant information in the uploaded documents to answer your question. Please try rephrasing your question or upload more relevant documents.",
+                        citations=[],
+                        sources_count=0
+                    )
+                
+                # Extract citations from deduplicated sources
+                citations = []
+                for source in result['sources']:
+                    doc_id = source.get('document_id', '')
+                    title = source.get('title', 'Untitled')
+                    
+                    # Get excerpt from text
+                    excerpt = source.get('text', '')[:300]
+                    
+                    citations.append(Citation(
+                        document_id=doc_id,
+                        title=title,
+                        excerpt=excerpt
+                    ))
+                
                 return ChatResponse(
-                    answer="I couldn't find any relevant information in the uploaded documents to answer your question. Please try rephrasing your question or upload more relevant documents.",
-                    citations=[],
-                    sources_count=0
+                    answer=result['answer'],
+                    citations=citations,
+                    sources_count=len(citations)
                 )
             
-            # Extract citations
-            citations = []
-            for source in result.sources:
-                # Get document metadata to include title
-                doc_id = source.get('metadata', {}).get('document_id', source.get('document_id', ''))
+            else:
+                # Use standard RAG assistant
+                logger.info("Using standard RAG assistant")
                 
-                # Try to get document title from metadata file
-                title = 'Untitled'
-                try:
-                    import json
-                    from pathlib import Path
-                    metadata_file = Path('./data/documents_metadata.json')
-                    if metadata_file.exists():
-                        metadata = json.loads(metadata_file.read_text())
-                        if doc_id in metadata:
-                            title = metadata[doc_id].get('filename', 'Untitled')
-                except:
-                    pass
+                # Convert conversation history
+                history = []
+                if conversation_history:
+                    for msg in conversation_history:
+                        history.append({
+                            'role': msg.role,
+                            'content': msg.content
+                        })
                 
-                citations.append(Citation(
-                    document_id=doc_id,
-                    title=title,
-                    excerpt=source.get('text', '')[:300]
-                ))
-            
-            return ChatResponse(
-                answer=result.answer,
-                citations=citations,
-                sources_count=len(citations)
-            )
+                # Get answer from assistant
+                result = self.assistant.ask_question(
+                    question=question,
+                    conversation_history=history,
+                    top_k=8,
+                    use_graph=neo4j_available
+                )
+                
+                # Check if any relevant sources were found
+                if len(result.sources) == 0:
+                    return ChatResponse(
+                        answer="I couldn't find any relevant information in the uploaded documents to answer your question. Please try rephrasing your question or upload more relevant documents.",
+                        citations=[],
+                        sources_count=0
+                    )
+                
+                # Extract citations
+                citations = []
+                for source in result.sources:
+                    # Get document metadata to include title
+                    doc_id = source.get('metadata', {}).get('document_id', source.get('document_id', ''))
+                    
+                    # Try to get document title from metadata file
+                    title = 'Untitled'
+                    try:
+                        import json
+                        from pathlib import Path
+                        metadata_file = Path('./data/documents_metadata.json')
+                        if metadata_file.exists():
+                            metadata = json.loads(metadata_file.read_text())
+                            if doc_id in metadata:
+                                title = metadata[doc_id].get('filename', 'Untitled')
+                    except:
+                        pass
+                    
+                    citations.append(Citation(
+                        document_id=doc_id,
+                        title=title,
+                        excerpt=source.get('text', '')[:300]
+                    ))
+                
+                return ChatResponse(
+                    answer=result.answer,
+                    citations=citations,
+                    sources_count=len(citations)
+                )
             
         except Exception as e:
             logger.error(f"Error answering question: {str(e)}")

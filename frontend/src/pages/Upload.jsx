@@ -35,17 +35,74 @@ export default function Upload() {
 
   useEffect(()=>{
     if(!documentId||phase!=='processing') return
+    
+    let retryCount = 0
+    const MAX_RETRIES = 10
+    const INITIAL_DELAY = 1000  // 1 second
+    const MAX_DELAY = 30000      // 30 seconds
+    const TIMEOUT = 5 * 60 * 1000 // 5 minutes total timeout
+    const startTime = Date.now()
+    
     const poll=async()=>{
       try{
+        // Check for total timeout
+        if (Date.now() - startTime > TIMEOUT) {
+          clearInterval(pollRef.current)
+          setPhase('failed')
+          toast.error('Processing timeout - operation took too long')
+          return
+        }
+        
         const res=await documentsAPI.get(documentId)
         const status=res?.data?.status||res?.data?.processing_status
         setDocStatus(status)
-        if(status==='completed'){clearInterval(pollRef.current);setBackendDone(true)}
-        if(status==='failed'){clearInterval(pollRef.current);clearInterval(stepRef.current);setPhase('failed');toast.error('Processing failed')}
-      }catch(e){console.warn(e)}
+        
+        if(status==='completed'){
+          clearInterval(pollRef.current)
+          setBackendDone(true)
+          console.log('Document processing completed')
+        }
+        else if(status==='failed'){
+          clearInterval(pollRef.current)
+          clearInterval(stepRef.current)
+          setPhase('failed')
+          toast.error('Processing failed')
+        }
+        else {
+          // Still processing - schedule next poll with exponential backoff
+          retryCount++
+          if (retryCount >= MAX_RETRIES) {
+            clearInterval(pollRef.current)
+            setPhase('failed')
+            toast.error('Processing timeout - max retries reached')
+            return
+          }
+          
+          // Calculate next delay: double each time, capped at MAX_DELAY
+          const nextDelay = Math.min(INITIAL_DELAY * Math.pow(2, retryCount - 1), MAX_DELAY)
+          console.log(`Polling retry ${retryCount}/${MAX_RETRIES}, next delay: ${nextDelay}ms`)
+          
+          clearInterval(pollRef.current)
+          pollRef.current = setTimeout(poll, nextDelay)
+        }
+      }catch(e){
+        console.warn('Polling error:', e)
+        retryCount++
+        if (retryCount >= MAX_RETRIES) {
+          clearInterval(pollRef.current)
+          setPhase('failed')
+          toast.error('Failed to check processing status')
+        }
+      }
     }
-    poll(); pollRef.current=setInterval(poll,2500)
-    return()=>clearInterval(pollRef.current)
+    
+    // Start first poll immediately
+    poll()
+    
+    return()=>{
+      clearInterval(pollRef.current)
+      clearTimeout(pollRef.current)
+    }
   },[documentId,phase])
 
   useEffect(()=>{

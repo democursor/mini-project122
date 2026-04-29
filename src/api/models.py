@@ -121,3 +121,16 @@ class ChatMessageResponse(BaseModel):
 class ChatMessageListResponse(BaseModel):
     messages: List[ChatMessageResponse]
     session_id: str
+
+# Job Models (for background processing)
+class JobStatus(BaseModel):
+    job_id: str
+    status: str  # pending, processing, completed, failed
+    result: Optional[dict] = None
+    error: Optional[str] = None
+    created_at: str
+
+class JobResponse(BaseModel):
+    job_id: str
+    status: str
+    message: str

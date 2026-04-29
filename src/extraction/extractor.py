@@ -2,10 +2,53 @@ import logging
 import time
 from typing import List, Optional, Dict
 import re
+import threading
 
 from .models import Entity, Keyphrase, ConceptExtractionResult
 
 logger = logging.getLogger(__name__)
+
+# Thread-safe singleton for SentenceTransformer model
+_sentence_transformer_model = None
+_sentence_transformer_lock = threading.Lock()
+_current_model_name = None
+
+
+def get_sentence_transformer(model_name: str = "all-MiniLM-L6-v2"):
+    """
+    Get SentenceTransformer model using thread-safe singleton pattern.
+    Model is loaded once and reused across all calls.
+    
+    Args:
+        model_name: Name of the model to load
+        
+    Returns:
+        SentenceTransformer model instance
+    """
+    global _sentence_transformer_model, _current_model_name
+    
+    # Fast path: model already loaded and matches requested model
+    if _sentence_transformer_model is not None and _current_model_name == model_name:
+        logger.debug(f"Reusing existing SentenceTransformer model: {model_name} (singleton)")
+        return _sentence_transformer_model
+    
+    # Slow path: need to load model (thread-safe)
+    with _sentence_transformer_lock:
+        # Double-check pattern
+        if _sentence_transformer_model is not None and _current_model_name == model_name:
+            logger.debug(f"Reusing SentenceTransformer model loaded by another thread: {model_name}")
+            return _sentence_transformer_model
+        
+        try:
+            from sentence_transformers import SentenceTransformer
+            logger.info(f"Loading SentenceTransformer model: {model_name} (singleton initialization)")
+            _sentence_transformer_model = SentenceTransformer(model_name)
+            _current_model_name = model_name
+            logger.info(f"SentenceTransformer model loaded successfully: {model_name}")
+            return _sentence_transformer_model
+        except Exception as e:
+            logger.error(f"Failed to load SentenceTransformer model {model_name}: {e}")
+            raise
 
 
 class ConceptExtractor:
@@ -89,17 +132,19 @@ class ConceptExtractor:
         return model_map.get(self.domain, model_map["scientific"])
     
     def _load_keyphrase_model(self):
-        """Load domain-specific keyphrase extraction model"""
+        """Load domain-specific keyphrase extraction model using singleton"""
         if self.kw_model is None:
             try:
                 from keybert import KeyBERT
-                from sentence_transformers import SentenceTransformer
                 
                 # Select embedding model based on domain
-                embedding_model = self._get_embedding_model()
-                sentence_model = SentenceTransformer(embedding_model)
+                embedding_model_name = self._get_embedding_model()
+                
+                # Use singleton to get/load the SentenceTransformer model
+                sentence_model = get_sentence_transformer(embedding_model_name)
+                
                 self.kw_model = KeyBERT(model=sentence_model)
-                logger.info(f"Loaded KeyBERT with {embedding_model}")
+                logger.info(f"Loaded KeyBERT with {embedding_model_name} (using singleton)")
             except Exception as e:
                 logger.error(f"Failed to load KeyBERT: {e}")
                 raise
@@ -120,9 +165,10 @@ class ConceptExtractor:
         model = embedding_map.get(self.domain, "all-MiniLM-L6-v2")
         
         # Fallback to general model if domain model not available
+        # The singleton will handle the actual loading and caching
         try:
-            from sentence_transformers import SentenceTransformer
-            SentenceTransformer(model)
+            # Try to get the model through singleton (will load if needed)
+            get_sentence_transformer(model)
             return model
         except Exception as e:
             logger.warning(f"Domain model {model} not available, using general model: {e}")

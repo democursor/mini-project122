@@ -1,28 +1,29 @@
-"""Vector storage using ChromaDB"""
-import chromadb
-from chromadb.config import Settings
-from typing import List, Dict, Any, Optional
+"""Vector storage using ChromaDB HTTP client"""
 import logging
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import numpy as np
 
 from .models import ChunkEmbedding
+from .chroma_client import get_chroma_client
+
+logger = logging.getLogger(__name__)
 
 
 class VectorStore:
-    """Manages vector storage using ChromaDB"""
+    """Manages vector storage using ChromaDB HTTP client"""
     
-    def __init__(self, persist_directory: str = "./data/chroma"):
-        self.persist_directory = persist_directory
-        self.logger = logging.getLogger(__name__)
-        self.client = chromadb.PersistentClient(
-            path=persist_directory,
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
-        )
-        self.collection = self._get_or_create_collection()
+    def __init__(self, persist_directory: str = None):
+        """
+        Initialize with HTTP client (persist_directory ignored for HTTP mode)
+        """
+        self.logger = logger
+        try:
+            self.client = get_chroma_client()
+            self.collection = self._get_or_create_collection()
+        except Exception as e:
+            self.logger.error(f"Failed to initialize VectorStore: {e}")
+            raise
     
     def _get_or_create_collection(self):
         """Get or create the main document collection"""
@@ -118,8 +119,7 @@ class VectorStore:
         
         return {
             "total_chunks": count,
-            "collection_name": self.collection.name,
-            "persist_directory": self.persist_directory
+            "collection_name": self.collection.name
         }
     
     def delete_document_chunks(self, document_id: str):
